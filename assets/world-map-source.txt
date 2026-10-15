@@ -1,0 +1,6 @@
+Texture: world-map-natural-earth.jpg
+Dataset: Natural Earth I with Shaded Relief and Water, NE1_50M_SR_W.
+Source: https://www.naturalearthdata.com/downloads/50m-raster-data/50m-natural-earth-1/
+Download: https://naciscdn.org/naturalearth/50m/raster/NE1_50M_SR_W.zip
+License: Public domain. https://www.naturalearthdata.com/about/terms-of-use/
+Preparation: Converted the original global equirectangular TIFF to a 4096 x 2048 JPEG for use as a browser texture, retaining the complete -90 to +90 degree latitude range. No generated geography or text labels.
