@@ -2,6 +2,14 @@ body { margin: 0; background: #f5f5f5; font-family: sans-serif; }
 main { height: 100dvh; display: flex; flex-direction: column; }
 #view { flex: 1; min-height: 0; }
 #view-controls { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; }
+#projection-controls { position: absolute; top: 12px; right: 12px; max-width: calc(100% - 24px); display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+#projection-controls #view-controls { position: static; max-width: 100%; }
+#projection-controls select { min-width: 0; }
+#projection-properties { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+#projection-properties:empty { display: none; }
+#projection-controls select, #projection-controls button, .projection-tag { font: 13.3333px Arial, sans-serif; }
+.projection-tag { padding: 3px 7px; border: 1px solid black; border-radius: 999px; background: white; color: black; text-decoration: none; }
+.projection-tag:focus-visible { outline: 2px solid black; outline-offset: 2px; }
 canvas { display: block; touch-action: none; }
 #progress {
   --progress: 0%;
@@ -20,12 +28,12 @@ canvas { display: block; touch-action: none; }
 #progress::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 999px;
-  background: linear-gradient(to right, #718b9e var(--progress), #d5dce0 var(--progress));
+  background: var(--stage-track, linear-gradient(to right, #718b9e var(--progress), #d5dce0 var(--progress)));
 }
 #progress::-moz-range-track {
   height: 4px;
   border-radius: 999px;
-  background: linear-gradient(to right, #718b9e var(--progress), #d5dce0 var(--progress));
+  background: var(--stage-track, linear-gradient(to right, #718b9e var(--progress), #d5dce0 var(--progress)));
 }
 #progress::-webkit-slider-thumb {
   appearance: none;

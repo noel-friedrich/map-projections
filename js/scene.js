@@ -74,9 +74,27 @@ export function createScene(container) {
     const flatFit = 1 + Math.PI / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
       Math.max(1, camera.aspect));
     // Mercator finishes zooming out during unrolling, before the flat map stretches.
-    const cameraScale = state.sameHeight
+    let cameraScale = state.sameHeight
       ? THREE.MathUtils.lerp(1, Math.max(1, flatFit * 1.1 / sphereDistance), state.unroll)
       : THREE.MathUtils.lerp(1, 2.05, state.mercator ? state.unroll : state.project);
+    if (state.pseudo) {
+      const fitDistance = 1 + 1.15 * Math.max(Math.PI / camera.aspect, Math.PI / 2) /
+        Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const fitScale = Math.max(1, fitDistance / (sphereDistance * Math.max(1, 1 / camera.aspect)));
+      const spread = 1 - (1 - state.reshape * 0.35) * (1 - state.unroll);
+      cameraScale = THREE.MathUtils.lerp(1, fitScale, spread);
+    }
+    if (state.tetrahedral || state.azimuthal) {
+      const shape = Math.min(1, state.progress * 2);
+      const unfold = Math.max(0, state.progress * 2 - 1);
+      const halfWidth = state.tetrahedral ? THREE.MathUtils.lerp(1, 3, shape) + (Math.sqrt(24) - 3) * unfold : 2;
+      const halfHeight = state.tetrahedral ? THREE.MathUtils.lerp(1, 3, shape) + (Math.sqrt(18) - 3) * unfold : 2;
+      const nearZ = state.tetrahedral ? 1 + 2 * shape * (1 - unfold) : 1;
+      const fitDistance = nearZ + 1.15 * Math.max(halfWidth / camera.aspect, halfHeight) /
+        Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const fitScale = Math.max(1, fitDistance / (sphereDistance * Math.max(1, 1 / camera.aspect)));
+      cameraScale = state.azimuthal ? THREE.MathUtils.lerp(1, fitScale, state.progress) : fitScale;
+    }
     camera.position.sub(controls.target)
       .multiplyScalar(cameraScale / previousCameraScale).add(controls.target);
     previousCameraScale = cameraScale;

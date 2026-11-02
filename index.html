@@ -17,15 +17,25 @@
 <body>
   <main>
     <div id="view" aria-label="Interactive 3D map projection"></div>
-    <div id="view-controls">
+    <div id="projection-controls">
+      <div id="view-controls">
       <select id="projection" aria-label="Projection">
         <option value="mercator">Mercator</option>
         <option value="same-height">Lambert cylindrical equal-area</option>
         <option value="classic">central cylindrical projection</option>
+        <option value="sinusoidal">Sinusoidal</option>
+        <option value="robinson">Robinson</option>
+        <option value="equal-earth">Equal Earth</option>
+        <option value="goode">Goode homolosine (interrupted)</option>
+        <option value="equirectangular">Equirectangular (Plate Carrée)</option>
+        <option value="tetrahedral">Lee conformal tetrahedral</option>
+        <option value="lambert-azimuthal">Lambert azimuthal equal-area</option>
       </select>
       <button id="reset" type="button">Reset</button>
+      </div>
+      <div id="projection-properties" aria-label="Properties of the completed projection" aria-live="polite"></div>
     </div>
-    <input id="progress" aria-label="Projection progress" type="range" min="0" max="100" step="0.1" value="0">
+    <input id="progress" aria-label="Projection progress" title="N: next stage · B: previous stage" type="range" min="0" max="100" step="0.1" value="0">
     <p id="status" role="status" hidden></p>
   </main>
   <script type="module" src="./js/main.js"></script>

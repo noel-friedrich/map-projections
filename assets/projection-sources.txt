@@ -1,0 +1,59 @@
+Projection equations and reference data
+
+Sinusoidal:
+https://proj.org/en/stable/operations/projections/sinu.html
+
+Robinson: published 5-degree width and height table, quadratic interpolation,
+and conventional unit-sphere scale factors 0.8487 and 1.3523.
+https://proj.org/en/stable/operations/projections/robin.html
+https://github.com/d3/d3-geo-projection/blob/main/src/robinson.js
+
+Equal Earth: Savric, Patterson and Jenny (2018), standard polynomial equations.
+https://proj.org/en/stable/operations/projections/eqearth.html
+https://github.com/d3/d3-geo/blob/main/src/projection/equalEarth.js
+
+Interrupted Goode homolosine: Sinusoidal/Mollweide composite, transition at
+0.7109889596207567 radians, polar y offset 0.0528035274542, land-oriented lobes.
+https://proj.org/en/stable/operations/projections/igh.html
+https://github.com/d3/d3-geo-projection/blob/main/src/interrupted/homolosine.js
+
+The animated intermediate surfaces are illustrative geometric constructions.
+Final projection coordinates follow the definitions above. Surface patches
+are split at the Goode lobe boundaries throughout the animation so no triangle
+bridges an interruption. The existing texture and annotations remain attached
+to geographic coordinates.
+
+Reference implementation attribution (D3 projection routines and interpolation):
+d3-geo-projection: Copyright 2013-2021 Mike Bostock
+d3-geo: Copyright 2010-2024 Mike Bostock
+d3-geo-polygon: Copyright 2017-2024 Mike Bostock
+
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
+
+Equirectangular (Plate Carree): x = longitude, y = latitude on a unit sphere.
+https://proj.org/en/stable/operations/projections/eqc.html
+
+Lambert azimuthal equal-area: centered on the front point (longitude/latitude
+0/0), radial distance 2 sin(c/2), where c is angular distance from the center.
+The antipode has a separate boundary vertex for each radial direction. It opens
+into the disk rim, so no triangles span the singularity.
+https://proj.org/en/stable/operations/projections/laea.html
+
+Lee conformal tetrahedral: stereographic face coordinates followed by the
+complex integral of (1-z^3)^(-1/2). The implementation evaluates convergent
+power series at the center or nearest corner; corner coefficients are generated
+from the polynomial recurrence rather than a truncated lookup table. Reference
+corner value and formulation: D3's Lee implementation, based on McIlroy.
+https://github.com/d3/d3-geo-polygon/blob/main/src/tetrahedralLee.js
+https://github.com/d3/d3-geo-polygon#geotetrahedrallee
+The four faces form a regular tetrahedron circumscribed about the unit sphere.
+Three faces rotate rigidly about the edges of the front face to form the net.

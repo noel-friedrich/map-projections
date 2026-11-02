@@ -1,6 +1,87 @@
 import * as THREE from 'three';
-import { projectPoint } from './projections.js';
+import { projectPoint, projectAzimuthal } from './projections.js';
 import { createMapMaterial } from './texture.js';
+import { GOODE_LOBES } from './pseudocylindrical.js';
+import { TETRA_FACES, createTetrahedralCoordinate, animateTetrahedral } from './tetrahedral.js';
+
+function makeSurface(coordinates, indices, uvs = coordinates.flatMap(c => [
+  c.longitude / (2 * Math.PI) + 0.5, c.latitude / Math.PI + 0.5,
+])) {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(coordinates.length * 3), 3).setUsage(THREE.DynamicDrawUsage));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute('sphereDirection', new THREE.BufferAttribute(new Float32Array(coordinates.length * 3), 3).setUsage(THREE.DynamicDrawUsage));
+  geometry.setIndex(indices);
+  return { geometry, coordinates };
+}
+
+function createAzimuthalGeometry() {
+  const coordinates = [], indices = [];
+  const columns = 192, rows = 128;
+  for (let row = 0; row <= rows; row++) {
+    const angle = row / rows * Math.PI;
+    for (let column = 0; column <= columns; column++) {
+      const azimuth = column / columns * Math.PI * 2;
+      const direction = [Math.sin(angle) * Math.cos(azimuth), Math.sin(angle) * Math.sin(azimuth), Math.cos(angle)];
+      coordinates.push({ angle, azimuth, direction, longitude: Math.atan2(direction[0], direction[2]), latitude: Math.asin(direction[1]) });
+      if (row < rows && column < columns) {
+        const a = row * (columns + 1) + column, b = a + 1, c = a + columns + 1, d = c + 1;
+        indices.push(a, c, b, b, c, d);
+      }
+    }
+  }
+  return makeSurface(coordinates, indices);
+}
+
+function createTetrahedralGeometry() {
+  const coordinates = [], indices = [];
+  const resolution = 96;
+  for (const face of TETRA_FACES) {
+    const offset = coordinates.length;
+    const index = (row, column) => offset + row * (resolution + 1) - row * (row - 1) / 2 + column;
+    for (let row = 0; row <= resolution; row++) {
+      for (let column = 0; column <= resolution - row; column++) {
+        const weights = [1 - (row + column) / resolution, row / resolution, column / resolution];
+        const point = [0, 1, 2].map(axis => face.vertices.reduce((sum, vertex, i) => sum + vertex[axis] * weights[i], 0));
+        const length = Math.hypot(...point);
+        const direction = point.map(value => value / length);
+        coordinates.push({ direction, tetra: createTetrahedralCoordinate(direction, face.id),
+          longitude: Math.atan2(direction[0], direction[2]), latitude: Math.asin(direction[1]) });
+        if (row < resolution && column < resolution - row) {
+          const a = index(row, column), b = index(row, column + 1), c = index(row + 1, column);
+          indices.push(a, c, b);
+          if (column < resolution - row - 1) indices.push(b, c, index(row + 1, column + 1));
+        }
+      }
+    }
+  }
+  return makeSurface(coordinates, indices);
+}
+
+function createSurfaceGeometry() {
+  const coordinates = [];
+  const indices = [];
+  const uvs = [];
+  for (const lobe of GOODE_LOBES) {
+    const columns = Math.ceil((lobe.east - lobe.west) / (2 * Math.PI) * 192);
+    const rows = 64;
+    const offset = coordinates.length;
+    for (let row = 0; row <= rows; row++) {
+      const latitude = lobe.south + (lobe.north - lobe.south) * row / rows;
+      for (let column = 0; column <= columns; column++) {
+        const longitude = lobe.west + (lobe.east - lobe.west) * column / columns;
+        coordinates.push({ longitude, latitude, lobeCenter: lobe.center });
+        uvs.push(longitude / (2 * Math.PI) + 0.5, latitude / Math.PI + 0.5);
+        if (row < rows && column < columns) {
+          const a = offset + row * (columns + 1) + column;
+          const b = a + 1, c = a + columns + 1, d = c + 1;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+    }
+  }
+  return makeSurface(coordinates, indices, uvs);
+}
 
 function createCylinderGuide() {
   const vertices = [];
@@ -26,18 +107,11 @@ function createCylinderGuide() {
 }
 
 export function createModel() {
-  const geometry = new THREE.PlaneGeometry(1, 1, 192, 128);
-  const positions = geometry.attributes.position;
-  const uv = geometry.attributes.uv;
-  const sphereDirections = new THREE.BufferAttribute(new Float32Array(positions.count * 3), 3);
-  sphereDirections.setUsage(THREE.DynamicDrawUsage);
-  geometry.setAttribute('sphereDirection', sphereDirections);
-  positions.setUsage(THREE.DynamicDrawUsage);
-  const coordinates = [];
-  for (let i = 0; i < positions.count; i++) {
-    coordinates.push({ longitude: (uv.getX(i) - 0.5) * 2 * Math.PI,
-      latitude: (uv.getY(i) - 0.5) * Math.PI });
-  }
+  let { geometry, coordinates } = createSurfaceGeometry();
+  const surfaces = new Map([['standard', { geometry, coordinates }]]);
+  let positions = geometry.attributes.position;
+  let uv = geometry.attributes.uv;
+  let sphereDirections = geometry.attributes.sphereDirection;
 
   const rotation = new THREE.Quaternion();
   const inverseRotation = new THREE.Matrix3();
@@ -52,10 +126,20 @@ export function createModel() {
   const position = { x: 0, y: 0, z: 0 };
 
   function update(state) {
+    const kind = state.tetrahedral ? 'tetrahedral' : state.azimuthal ? 'azimuthal' : 'standard';
+    if (!surfaces.has(kind)) surfaces.set(kind, state.tetrahedral ? createTetrahedralGeometry() : createAzimuthalGeometry());
+    ({ geometry, coordinates } = surfaces.get(kind));
+    mesh.geometry = geometry;
+    positions = geometry.attributes.position;
+    uv = geometry.attributes.uv;
+    sphereDirections = geometry.attributes.sphereDirection;
     for (let i = 0; i < coordinates.length; i++) {
-      const { longitude, latitude: fullLatitude } = coordinates[i];
+      const coordinate = coordinates[i];
+      const { longitude, latitude: fullLatitude, lobeCenter } = coordinate;
       const latitude = fullLatitude * state.latitudeRange / (Math.PI / 2);
-      projectPoint(longitude, latitude, state, position);
+      if (state.tetrahedral) animateTetrahedral(coordinate.tetra, state.progress, position);
+      else if (state.azimuthal) projectAzimuthal(coordinate.angle, coordinate.azimuth, state.progress, position);
+      else projectPoint(longitude, latitude, state, position, lobeCenter);
       positions.setXYZ(i, position.x, position.y, position.z);
       uv.setY(i, (latitude + Math.PI / 2) / Math.PI);
       sphereDirections.setXYZ(i, Math.cos(latitude) * Math.sin(longitude), Math.sin(latitude),
@@ -64,9 +148,14 @@ export function createModel() {
     positions.needsUpdate = true;
     sphereDirections.needsUpdate = true;
     uv.needsUpdate = true;
-    guide.visible = state.project < 1;
-    guide.material.opacity = 0.3 * (1 - state.project);
-    guide.scale.y = state.guideHeight / Math.PI;
+    geometry.computeVertexNormals();
+    geometry.computeBoundingSphere();
+    const cylindrical = !state.pseudo && !state.tetrahedral && !state.azimuthal;
+    guide.visible = cylindrical && state.project < 1;
+    if (cylindrical) {
+      guide.material.opacity = 0.3 * (1 - state.project);
+      guide.scale.y = state.guideHeight / Math.PI;
+    }
   }
 
   function rotate(axis, angle) {
@@ -86,5 +175,19 @@ export function createModel() {
     material.needsUpdate = true;
   }
 
-  return { mesh, guide, rotation, update, rotate, resetRotation, setTexture };
+  function textureDirectionAt(hit) {
+    // Reverse the mesh transform, then interpolate the exact varying sampled by
+    // the fragment shader. UV interpolation alone differs on curved triangles.
+    const local = mesh.worldToLocal(hit.point.clone());
+    const indices = [hit.face.a, hit.face.b, hit.face.c];
+    const vertices = indices.map(index => new THREE.Vector3().fromBufferAttribute(positions, index));
+    const weights = THREE.Triangle.getBarycoord(local, ...vertices, new THREE.Vector3());
+    if (!weights) return null;
+    const direction = new THREE.Vector3();
+    indices.forEach((index, i) => direction.addScaledVector(
+      new THREE.Vector3().fromBufferAttribute(sphereDirections, index), weights.getComponent(i)));
+    return direction.normalize().applyMatrix3(inverseRotation).normalize();
+  }
+
+  return { mesh, guide, rotation, update, rotate, resetRotation, setTexture, textureDirectionAt };
 }
