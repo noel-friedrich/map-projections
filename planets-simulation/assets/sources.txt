@@ -1,0 +1,19 @@
+Earth
+File: ../../assets/world-map-natural-earth.jpg (existing project texture, unchanged)
+Dataset: Natural Earth I with Shaded Relief and Water, NE1_50M_SR_W.
+Source: https://www.naturalearthdata.com/downloads/50m-raster-data/50m-natural-earth-1/
+License: Public domain. https://www.naturalearthdata.com/about/terms-of-use/
+Original project preparation: complete equirectangular map, 4096 x 2048 JPEG.
+
+Mars and Moon
+Files: mars.jpg, moon.jpg (unmodified 2048 x 1024 equirectangular JPEGs)
+Credit: Solar System Scope / INOVE
+Source: https://www.solarsystemscope.com/textures/
+Downloads:
+https://www.solarsystemscope.com/textures/download/2k_mars.jpg
+https://www.solarsystemscope.com/textures/download/2k_moon.jpg
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+Based on NASA elevation and imagery data, with adjusted colours and filled gaps,
+as described by the publisher. These are surface maps, not AI-generated images.
+Downloaded 2026-10-18.

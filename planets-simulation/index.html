@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f5f5">
+  <title>Planet simulation</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <main>
+    <div id="view" aria-label="First-person planet simulation. Click to fly; move the mouse to look; W A S D to move; Q E to descend and ascend; Escape to release the mouse."></div>
+    <div id="view-controls"><button id="reset" type="button">Reset</button></div>
+    <p id="help">Click to fly · WASD move · Mouse look · Q/E down/up · Shift boost · F friction · Esc release</p>
+    <input id="progress" aria-label="Simulation speed in ticks per second" type="range" min="0" max="4800" step="1" value="120">
+    <p id="status" role="status" hidden></p>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

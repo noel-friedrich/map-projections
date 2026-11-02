@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createGridMaterial } from './grid.js';
 
-function createEnvironment(scene) {
+export function createEnvironment(scene) {
   const floorY = -6;
   const geometry = new THREE.PlaneGeometry(2000, 2000);
   geometry.rotateX(-Math.PI / 2);
