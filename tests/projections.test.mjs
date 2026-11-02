@@ -8,6 +8,27 @@ const close = (a, b, tolerance = 1e-8) => assert.ok(Math.abs(a - b) < tolerance,
 const point = (type, progress, longitude, latitude, center) => projectPoint(longitude, latitude,
   getProjectionState(type, progress), {}, center);
 
+test('cached cylindrical coordinates retain the globe, cylinder and final-map definitions', () => {
+  for (const type of ['mercator', 'same-height', 'classic']) {
+    const state = getProjectionState(type, 1);
+    for (const latitude of [-0.8, 0, 0.8]) {
+      for (const longitude of [-2, -0.5, 0.5, 2]) {
+        const globe = point(type, 0, longitude, latitude);
+        close(globe.x, Math.cos(latitude) * Math.sin(longitude));
+        close(globe.y, Math.sin(latitude)); close(globe.z, Math.cos(latitude) * Math.cos(longitude));
+        const flat = projectPoint(longitude, latitude, state, {});
+        close(flat.x, longitude); close(flat.z, 1);
+        close(flat.y, type === 'mercator' ? Math.log(Math.tan(Math.PI / 4 + latitude / 2)) :
+          type === 'classic' ? Math.tan(latitude) : Math.sin(latitude));
+      }
+    }
+  }
+  const cylinder = point('mercator', 1 / 3, 0.7, 0.8);
+  close(Math.hypot(cylinder.x, cylinder.z), 1); close(cylinder.y, Math.sin(0.8));
+  const unrolled = point('mercator', 2 / 3, 0.7, 0.8);
+  close(unrolled.x, 0.7); close(unrolled.y, Math.sin(0.8)); close(unrolled.z, 1);
+});
+
 test('all new projections start on the full sphere and finish on one plane', () => {
   for (const type of types) {
     for (const latitude of [-Math.PI / 2, -1, 0, 1, Math.PI / 2]) {

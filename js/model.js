@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { projectPoint, projectAzimuthal } from './projections.js';
 import { createMapMaterial } from './texture.js';
 import { GOODE_LOBES } from './pseudocylindrical.js';
-import { TETRA_FACES, createTetrahedralCoordinate, animateTetrahedral } from './tetrahedral.js';
+import { TETRA_VERTICES, TETRA_FACES, createTetrahedralCoordinate, animateTetrahedral, createTetrahedralAnimation } from './tetrahedral.js';
 
 function makeSurface(coordinates, indices, uvs = coordinates.flatMap(c => [
   c.longitude / (2 * Math.PI) + 0.5, c.latitude / Math.PI + 0.5,
@@ -23,7 +23,8 @@ function createAzimuthalGeometry() {
     for (let column = 0; column <= columns; column++) {
       const azimuth = column / columns * Math.PI * 2;
       const direction = [Math.sin(angle) * Math.cos(azimuth), Math.sin(angle) * Math.sin(azimuth), Math.cos(angle)];
-      coordinates.push({ angle, azimuth, direction, longitude: Math.atan2(direction[0], direction[2]), latitude: Math.asin(direction[1]) });
+      coordinates.push({ angle, azimuth, cosAzimuth: Math.cos(azimuth), sinAzimuth: Math.sin(azimuth),
+        direction, longitude: Math.atan2(direction[0], direction[2]), latitude: Math.asin(direction[1]) });
       if (row < rows && column < columns) {
         const a = row * (columns + 1) + column, b = a + 1, c = a + columns + 1, d = c + 1;
         indices.push(a, c, b, b, c, d);
@@ -106,6 +107,19 @@ function createCylinderGuide() {
   );
 }
 
+function createTetrahedronGuide() {
+  const vertices = [];
+  for (let i = 0; i < TETRA_VERTICES.length; i++) {
+    for (let j = i + 1; j < TETRA_VERTICES.length; j++) vertices.push(...TETRA_VERTICES[i], ...TETRA_VERTICES[j]);
+  }
+  const guide = new THREE.LineSegments(
+    new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)),
+    new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.3 })
+  );
+  guide.name = 'tetrahedron-guide';
+  return guide;
+}
+
 export function createModel() {
   let { geometry, coordinates } = createSurfaceGeometry();
   const surfaces = new Map([['standard', { geometry, coordinates }]]);
@@ -122,39 +136,64 @@ export function createModel() {
   mesh.castShadow = true;
   // The bounding volume changes as the geometry bends.
   mesh.frustumCulled = false;
-  const guide = createCylinderGuide();
+  const guide = new THREE.Group();
+  const cylinderGuide = createCylinderGuide();
+  const tetrahedronGuide = createTetrahedronGuide();
+  guide.add(cylinderGuide, tetrahedronGuide);
   const position = { x: 0, y: 0, z: 0 };
 
   function update(state) {
     const kind = state.tetrahedral ? 'tetrahedral' : state.azimuthal ? 'azimuthal' : 'standard';
     if (!surfaces.has(kind)) surfaces.set(kind, state.tetrahedral ? createTetrahedralGeometry() : createAzimuthalGeometry());
-    ({ geometry, coordinates } = surfaces.get(kind));
+    const surface = surfaces.get(kind);
+    ({ geometry, coordinates } = surface);
     mesh.geometry = geometry;
     positions = geometry.attributes.position;
     uv = geometry.attributes.uv;
     sphereDirections = geometry.attributes.sphereDirection;
+    const updateGeography = surface.latitudeRange !== state.latitudeRange;
+    const tetraAnimation = state.tetrahedral ? createTetrahedralAnimation(state.progress) : null;
+    const azimuthalRows = state.azimuthal ? new Map() : null;
     for (let i = 0; i < coordinates.length; i++) {
       const coordinate = coordinates[i];
       const { longitude, latitude: fullLatitude, lobeCenter } = coordinate;
       const latitude = fullLatitude * state.latitudeRange / (Math.PI / 2);
-      if (state.tetrahedral) animateTetrahedral(coordinate.tetra, state.progress, position);
-      else if (state.azimuthal) projectAzimuthal(coordinate.angle, coordinate.azimuth, state.progress, position);
+      if (state.tetrahedral) animateTetrahedral(coordinate.tetra, state.progress, position, tetraAnimation);
+      else if (state.azimuthal) {
+        let row = azimuthalRows.get(coordinate.angle);
+        if (!row) {
+          row = projectAzimuthal(coordinate.angle, 0, state.progress, {});
+          azimuthalRows.set(coordinate.angle, row);
+        }
+        position.x = row.x * coordinate.cosAzimuth;
+        position.y = row.x * coordinate.sinAzimuth;
+        position.z = row.z;
+      }
       else projectPoint(longitude, latitude, state, position, lobeCenter);
       positions.setXYZ(i, position.x, position.y, position.z);
-      uv.setY(i, (latitude + Math.PI / 2) / Math.PI);
-      sphereDirections.setXYZ(i, Math.cos(latitude) * Math.sin(longitude), Math.sin(latitude),
-        Math.cos(latitude) * Math.cos(longitude));
+      if (updateGeography) {
+        uv.setY(i, (latitude + Math.PI / 2) / Math.PI);
+        sphereDirections.setXYZ(i, Math.cos(latitude) * Math.sin(longitude), Math.sin(latitude),
+          Math.cos(latitude) * Math.cos(longitude));
+      }
     }
     positions.needsUpdate = true;
-    sphereDirections.needsUpdate = true;
-    uv.needsUpdate = true;
-    geometry.computeVertexNormals();
-    geometry.computeBoundingSphere();
+    if (updateGeography) {
+      sphereDirections.needsUpdate = true;
+      uv.needsUpdate = true;
+      surface.latitudeRange = state.latitudeRange;
+    }
+    // This unlit material and its depth-only shadow pass do not use normals.
+    // Culling is disabled; recompute raycast bounds lazily only when clicked.
+    geometry.boundingSphere = null;
     const cylindrical = !state.pseudo && !state.tetrahedral && !state.azimuthal;
-    guide.visible = cylindrical && state.project < 1;
+    cylinderGuide.visible = cylindrical && state.project < 1;
+    tetrahedronGuide.visible = Boolean(state.tetrahedral) && state.progress < 0.5;
+    guide.visible = cylinderGuide.visible || tetrahedronGuide.visible;
+    if (state.tetrahedral) tetrahedronGuide.material.opacity = 0.3 * (1 - Math.min(1, state.progress * 2));
     if (cylindrical) {
-      guide.material.opacity = 0.3 * (1 - state.project);
-      guide.scale.y = state.guideHeight / Math.PI;
+      cylinderGuide.material.opacity = 0.3 * (1 - state.project);
+      cylinderGuide.scale.y = state.guideHeight / Math.PI;
     }
   }
 

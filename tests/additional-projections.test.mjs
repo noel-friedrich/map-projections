@@ -49,6 +49,19 @@ test('Lee maps each spherical corner exactly onto its tetrahedron vertex', () =>
   }
 });
 
+test('the first tetrahedral stage projects onto a fixed surrounding tetrahedron without rotation', () => {
+  for (const face of TETRA_FACES) {
+    const center = createTetrahedralCoordinate(face.normal, face.id);
+    const sample = createTetrahedralCoordinate(unit(face.normal.map((v, i) => v + face.right[i] * 0.2)), face.id);
+    for (const progress of [0, 0.1, 0.25, 0.4, 0.5]) {
+      assert.ok(distance(coords(animateTetrahedral(center, progress, {})), face.normal) < 1e-7);
+      const expected = sample.direction.map((v, i) => v + (sample.target[i] - v) * progress * 2);
+      assert.ok(distance(coords(animateTetrahedral(sample, progress, {})), expected) < 1e-7);
+    }
+    close(dot(coords(animateTetrahedral(sample, 0.5, {})), face.normal), 1);
+  }
+});
+
 test('Lee face mappings meet continuously along all six tetrahedral edges', () => {
   for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) {
     const a = TETRA_FACES[i], b = TETRA_FACES[j];

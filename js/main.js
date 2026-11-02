@@ -10,6 +10,8 @@ const slider = document.getElementById('progress');
 const projection = document.getElementById('projection');
 const status = document.getElementById('status');
 const propertyTags = document.getElementById('projection-properties');
+// Keep simulation precision independent of range-input stepping and URL formatting.
+let currentProgress = Number(slider.value);
 // Properties column: https://en.wikipedia.org/wiki/List_of_map_projections
 // Central cylindrical is classified as Perspective, outside these four tags.
 const projectionProperties = {
@@ -55,20 +57,21 @@ function loadUrlState() {
     ? savedProjection : projection.options[0].value;
   const savedProgress = params.get('progress');
   const progress = savedProgress !== null && savedProgress.trim() !== '' ? Number(savedProgress) : NaN;
-  slider.value = Number.isFinite(progress) ? Math.round(Math.max(0, Math.min(100, progress))) : slider.defaultValue;
+  currentProgress = Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : Number(slider.defaultValue);
+  slider.value = currentProgress;
   updateProjectionProperties();
 }
 
 function saveUrlState() {
   const url = new URL(window.location.href);
   url.searchParams.set('projection', projection.value);
-  url.searchParams.set('progress', String(Math.round(Number(slider.value))));
+  url.searchParams.set('progress', String(Math.round(currentProgress)));
   if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
 }
 
 function updateProgressTrack() {
   const checkpoints = getProjectionCheckpoints(projection.value);
-  const progress = Number(slider.value) / 100;
+  const progress = currentProgress / 100;
   const stops = [];
   for (let i = 0; i < checkpoints.length - 1; i++) {
     const start = checkpoints[i] * 100;
@@ -83,10 +86,10 @@ function updateProgressTrack() {
 }
 
 function updateProjection() {
-  const state = getProjectionState(projection.value, Number(slider.value) / 100);
+  const state = getProjectionState(projection.value, currentProgress / 100);
   model.update(state);
   view.frame(state);
-  slider.style.setProperty('--progress', `${Number(slider.value)}%`);
+  slider.style.setProperty('--progress', `${currentProgress}%`);
   updateProgressTrack();
   saveUrlState();
 }
@@ -98,6 +101,7 @@ window.addEventListener('popstate', () => {
 slider.addEventListener('pointerdown', () => { progressAnimation = null; });
 slider.addEventListener('input', () => {
   progressAnimation = null;
+  currentProgress = Number(slider.value);
   updateProjection();
 });
 projection.addEventListener('change', () => {
@@ -109,12 +113,13 @@ window.addEventListener('keydown', event => {
   if (!['KeyN', 'KeyB'].includes(event.code) || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.target.closest('select, textarea, [contenteditable], input:not([type="range"])')) return;
   event.preventDefault();
-  const from = Number(slider.value);
+  const from = currentProgress;
   const checkpoint = event.code === 'KeyB' ? getPreviousProjectionCheckpoint : getNextProjectionCheckpoint;
   const to = checkpoint(projection.value, (progressAnimation?.to ?? from) / 100) * 100;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     progressAnimation = null;
-    slider.value = to;
+    currentProgress = to;
+    slider.value = currentProgress;
     updateProjection();
   } else {
     progressAnimation = { from, to, start: performance.now() };
@@ -133,7 +138,8 @@ document.getElementById('reset').addEventListener('click', () => {
   progressAnimation = null;
   earthControls.reset();
   model.resetRotation();
-  slider.value = 0;
+  currentProgress = 0;
+  slider.value = currentProgress;
   view.reset();
   updateProjection();
   lastFrameTime = performance.now();
@@ -156,7 +162,8 @@ view.renderer.setAnimationLoop(time => {
     const { from, to, start } = progressAnimation;
     const fraction = Math.max(0, Math.min(1, (time - start) / 650));
     const eased = fraction * fraction * (3 - 2 * fraction);
-    slider.value = from + (to - from) * eased;
+    currentProgress = from + (to - from) * eased;
+    slider.value = currentProgress;
     if (fraction === 1) progressAnimation = null;
     updateProjection();
   }

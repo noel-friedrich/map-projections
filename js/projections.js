@@ -35,7 +35,7 @@ export function getProjectionState(type, progress) {
     return { type, progress, pseudo: true, reshape, unroll, curvature: 1 - unroll,
       homolosine: type === 'goode' ? clamp01(progress * 4 - 2) : 0,
       interrupt: type === 'goode' ? clamp01(progress * 4 - 3) : 0,
-      latitudeRange: Math.PI / 2, profiles: new Map() };
+      latitudeRange: Math.PI / 2, profiles: new Map(), columns: new Map() };
   }
   const mercator = type === 'mercator';
   // Mercator: equal-height projection, unroll, then conformal vertical stretch.
@@ -50,7 +50,20 @@ export function getProjectionState(type, progress) {
     ? lerp(Math.sin(latitudeRange), Math.tan(latitudeRange), project)
     : lerp(Math.sin(latitudeRange), Math.PI, stretch);
   return { progress, project, stretch, unroll, curvature: 1 - unroll, mercator, sameHeight, classic,
-    latitudeRange, guideHeight };
+    latitudeRange, guideHeight, profiles: new Map(), columns: new Map() };
+}
+
+function longitudeProfile(longitude, state) {
+  let column = state.columns.get(longitude);
+  if (!column) {
+    const k = state.curvature;
+    column = k < 1e-8 ? { x: longitude, bend: 0 } : {
+      x: Math.sin(k * longitude) / k,
+      bend: -2 * Math.sin(k * longitude / 2) ** 2 / k,
+    };
+    state.columns.set(longitude, column);
+  }
+  return column;
 }
 
 // Write into a reusable position object to avoid allocations for every vertex.
@@ -68,49 +81,45 @@ export function projectPoint(longitude, latitude, state, position, lobeCenter) {
   if (state.pseudo) {
     let profile = state.profiles.get(latitude);
     if (!profile) {
-      profile = latitudeProfile(state.type, latitude);
+      const destination = latitudeProfile(state.type, latitude);
+      const cosLatitude = Math.cos(latitude);
+      const polarChange = state.type === 'goode' && state.homolosine > 0;
+      profile = polarChange ? {
+        radius: lerp(cosLatitude, destination.radius, state.homolosine),
+        height: lerp(latitude, destination.height, state.homolosine),
+      } : {
+        radius: lerp(cosLatitude, state.type === 'goode' ? cosLatitude : destination.radius, state.reshape),
+        height: lerp(Math.sin(latitude), state.type === 'goode' ? latitude : destination.height, state.reshape),
+      };
       state.profiles.set(latitude, profile);
     }
     // Goode first unfolds as Sinusoidal; only then do its polar regions change.
-    const finalRadius = state.type === 'goode' ? Math.cos(latitude) : profile.radius;
-    const finalHeight = state.type === 'goode' ? latitude : profile.height;
-    const radius = lerp(Math.cos(latitude), finalRadius, state.reshape);
-    position.y = lerp(Math.sin(latitude), finalHeight, state.reshape);
-    const k = state.curvature;
-    position.x = k < 1e-8 ? radius * longitude : radius * Math.sin(k * longitude) / k;
-    position.z = lerp(radius, 1, state.unroll) - (k < 1e-8 ? 0 :
-      2 * radius * Math.sin(k * longitude / 2) ** 2 / k);
+    position.y = profile.height;
     if (state.type === 'goode' && state.homolosine > 0) {
-      const width = lerp(Math.cos(latitude), profile.radius, state.homolosine);
       const center = lobeCenter ?? goodeLobeCenter(longitude, latitude);
-      position.x = longitude * width + state.interrupt * center * (1 - width);
-      position.y = lerp(latitude, profile.height, state.homolosine);
+      position.x = longitude * profile.radius + state.interrupt * center * (1 - profile.radius);
       position.z = 1;
+    } else {
+      const column = longitudeProfile(longitude, state);
+      position.x = profile.radius * column.x;
+      position.z = lerp(profile.radius, 1, state.unroll) + profile.radius * column.bend;
     }
     return position;
   }
-  const sphereY = Math.sin(latitude);
-  const mercatorLatitude = Math.max(-MERCATOR_LIMIT, Math.min(MERCATOR_LIMIT, latitude));
-  const mercator = Math.log(Math.tan(Math.PI / 4 + mercatorLatitude / 2));
-  // A ray from the origin reaches radius 1 at scale 1 / cos(latitude),
-  // so its height is sin(latitude) / cos(latitude) = tan(latitude).
-  const cylinderY = state.sameHeight ? sphereY : state.classic ? Math.tan(latitude) :
-    lerp(sphereY, mercator, state.stretch);
-
-  if (state.unroll === 0) {
-    const radius = lerp(Math.cos(latitude), 1, state.project);
-    position.x = radius * Math.sin(longitude);
-    position.y = lerp(sphereY, cylinderY, state.project);
-    position.z = radius * Math.cos(longitude);
-  } else {
-    // Preserve arc length while opening the cut at ±180°. The central meridian
-    // stays at z=1; the stable sine expression also works near the flat endpoint.
-    const curvature = state.curvature;
-    position.x = curvature < 1e-6 ? longitude : Math.sin(curvature * longitude) / curvature;
-    position.y = cylinderY;
-    position.z = curvature < 1e-6 ? 1 :
-      1 - 2 * Math.sin(curvature * longitude / 2) ** 2 / curvature;
+  let row = state.profiles.get(latitude);
+  if (!row) {
+    const sphereY = Math.sin(latitude);
+    const clipped = Math.max(-MERCATOR_LIMIT, Math.min(MERCATOR_LIMIT, latitude));
+    const cylinderY = state.sameHeight ? sphereY : state.classic ? Math.tan(latitude) :
+      lerp(sphereY, Math.log(Math.tan(Math.PI / 4 + clipped / 2)), state.stretch);
+    row = { radius: lerp(Math.cos(latitude), 1, state.project),
+      height: lerp(sphereY, cylinderY, state.project) };
+    state.profiles.set(latitude, row);
   }
+  const column = longitudeProfile(longitude, state);
+  position.x = state.unroll === 0 ? row.radius * column.x : column.x;
+  position.y = row.height;
+  position.z = state.unroll === 0 ? row.radius * (1 + column.bend) : 1 + column.bend;
   return position;
 }
 

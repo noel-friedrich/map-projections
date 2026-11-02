@@ -74,28 +74,25 @@ export function createTetrahedralCoordinate(direction, faceId) {
   return { direction, target, face };
 }
 
-export function animateTetrahedral(coordinate, progress, position) {
+export function createTetrahedralAnimation(progress) {
   const shape = clamp01(progress * 2), unfold = clamp01(progress * 2 - 1);
+  return { shape, unfold, cosine: Math.cos(OPEN_ANGLE * unfold), sine: Math.sin(OPEN_ANGLE * unfold) };
+}
+
+export function animateTetrahedral(coordinate, progress, position, animation = createTetrahedralAnimation(progress)) {
+  const { shape, unfold, cosine, sine } = animation;
   const { direction, target, face } = coordinate;
-  let point = target;
+  let x = target[0], y = target[1], z = target[2];
   if (unfold > 0 && face.id !== 0) {
-    const relative = sub(target, face.hinge);
-    const cosine = Math.cos(OPEN_ANGLE * unfold), sine = Math.sin(OPEN_ANGLE * unfold);
-    point = add(face.hinge, add(add(scale(relative, cosine), scale(cross(face.axis, relative), sine)),
-      scale(face.axis, dot(face.axis, relative) * (1 - cosine))));
+    const dx = x - face.hinge[0], dy = y - face.hinge[1], dz = z - face.hinge[2];
+    const [ax, ay, az] = face.axis;
+    const along = (ax * dx + ay * dy + az * dz) * (1 - cosine);
+    x = face.hinge[0] + dx * cosine + (ay * dz - az * dy) * sine + ax * along;
+    y = face.hinge[1] + dy * cosine + (az * dx - ax * dz) * sine + ay * along;
+    z = face.hinge[2] + dz * cosine + (ax * dy - ay * dx) * sine + az * along;
   }
-  position.x = direction[0] + (point[0] - direction[0]) * shape;
-  position.y = direction[1] + (point[1] - direction[1]) * shape + SQRT2 * unfold;
-  position.z = direction[2] + (point[2] - direction[2]) * shape;
-  // Present the closed solid obliquely so its side faces are visible. This is a
-  // rigid rotation of the whole assembly, settling back to the plane as it opens.
-  const tilt = shape * (1 - unfold);
-  const yaw = tilt * Math.PI / 4, pitch = tilt * Math.PI / 6;
-  const x = position.x * Math.cos(yaw) + position.z * Math.sin(yaw);
-  const z = -position.x * Math.sin(yaw) + position.z * Math.cos(yaw);
-  const y = position.y * Math.cos(pitch) - z * Math.sin(pitch);
-  position.z = position.y * Math.sin(pitch) + z * Math.cos(pitch);
-  position.x = x;
-  position.y = y;
+  position.x = direction[0] + (x - direction[0]) * shape;
+  position.y = direction[1] + (y - direction[1]) * shape + SQRT2 * unfold;
+  position.z = direction[2] + (z - direction[2]) * shape;
   return position;
 }
