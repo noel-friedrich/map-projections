@@ -49,12 +49,13 @@ export function measureProjectionDistortion(type, sampleCount = 524288) {
     if (!Number.isInteger(sampleCount) || sampleCount < 2)
         throw new RangeError("At least two samples required");
     const state = getProjectionState(type, 1);
-    const limit = Math.sin(state.latitudeRange);
+    const minHeight = Math.sin(state.latitudeMin ?? -state.latitudeRange);
+    const maxHeight = Math.sin(state.latitudeMax ?? state.latitudeRange);
     const areas = [];
     let angleSum = 0;
     for (let i = 0; i < sampleCount; i++) {
         // Fibonacci sphere, restricted to the latitude range actually rendered.
-        const y = limit * (1 - (2 * (i + 0.5)) / sampleCount);
+        const y = maxHeight - (maxHeight - minHeight) * (i + 0.5) / sampleCount;
         const longitude =
             ((i * GOLDEN_ANGLE + Math.PI) % (2 * Math.PI)) - Math.PI;
         const radius = Math.sqrt(1 - y * y);

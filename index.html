@@ -3,8 +3,8 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>3D Map Projections Demo</title>
-        <link rel="stylesheet" href="./assets/styles.css?v=projection-grid-1" />
+        <title>3d Map Projections</title>
+        <link rel="stylesheet" href="./assets/styles.css?v=info-credits-1" />
         <script type="importmap">
             {
                 "imports": {
@@ -20,12 +20,17 @@
             <button id="info-toggle" class="icon-button" aria-label="Open info" aria-expanded="false" aria-controls="info-panel"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v6M10 5v1"/></svg></button>
             <div id="info-backdrop" hidden></div>
             <aside id="info-panel" inert aria-label="Projection information">
-                <header><h1 id="info-name"></h1><button id="choose-projection" class="icon-button" aria-label="Choose projection" aria-haspopup="dialog"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="m5 8 5 5 5-5"/></svg></button></header>
+                <header><button id="choose-projection" aria-label="Choose projection" aria-haspopup="dialog"><span id="info-name"></span><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="m5 8 5 5 5-5"/></svg></button></header>
                 <p id="info-description"></p><a id="info-source" target="_blank" rel="noopener noreferrer">Wikipedia ↗</a>
                 <section aria-label="Average error"><h2>Average Error</h2>
 <div class="error-row"><span>Angles</span><output id="angle-distortion-value"></output></div><div class="distortion-axis"><div class="distortion-track"><div id="angle-distortion-fill" class="distortion-fill"></div></div><div id="angle-distortion-ticks" class="distortion-ticks" aria-hidden="true"></div></div><div class="error-row"><span>Area</span><output id="area-distortion-value"></output></div><div class="distortion-axis"><div class="distortion-track"><div id="area-distortion-fill" class="distortion-fill"></div></div><div id="area-distortion-ticks" class="distortion-ticks" aria-hidden="true"></div></div></section>
+                <ol id="projection-steps" aria-label="Construction steps"></ol>
+                <footer id="info-credits">
+                    <hr>
+                    <p>This website was created by <a href="https://noel-friedrich.de" target="_blank" rel="noopener noreferrer">Noel Friedrich</a>. The code can be found on <a href="https://github.com/noel-friedrich/mercator" target="_blank" rel="noopener noreferrer">Github</a>. Earth texture from <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a>.</p>
+                </footer>
             </aside>
-            <button id="reset" type="button">Reset</button>
+            <button id="reset" type="button">Reset View</button>
             <div id="zoom-controls" role="group" aria-label="Zoom controls">
                 <button
                     id="zoom-in"
@@ -62,6 +67,6 @@
             <header><h2 id="projection-dialog-title">Choose a projection</h2><button id="close-projection-dialog" class="icon-button" aria-label="Close projection chooser">×</button></header>
             <div id="projection-grid"></div>
         </dialog>
-        <script type="module" src="./js/main.js?v=platonic-unfoldings-1"></script>
+        <script type="module" src="./js/main.js?v=step-animation-1"></script>
     </body>
 </html>

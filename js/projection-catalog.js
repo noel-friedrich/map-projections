@@ -58,5 +58,17 @@ export const projectionCatalog = [
   {
     "id": "icosahedron",
     "title": "Icosahedron unfolding"
+  },
+  {
+    "id": "lambert-conic",
+    "title": "Lambert conformal conic"
+  },
+  {
+    "id": "albers",
+    "title": "Albers equal-area conic"
+  },
+  {
+    "id": "winkel-tripel",
+    "title": "Winkel Tripel"
   }
 ];

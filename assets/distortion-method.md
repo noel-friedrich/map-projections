@@ -18,9 +18,11 @@ An optional argument changes the number of samples per projection (default
 Use a deterministic Fibonacci sphere with uniform height (sin(latitude)) and
 golden-angle longitudes. Every sample has equal surface-area weight. Mercator
 and central cylindrical use their existing rendered latitude bounds, respectively
-atan(sinh(pi)) ≈ 85.05° and atan(pi) ≈ 72.34°. The others cover the entire sphere.
-Thus scores describe each map's displayed region; the two cropped maps omit
-their polar caps. Exact poles and isolated singularities are not sampled.
+atan(sinh(pi)) ≈ 85.05° and atan(pi) ≈ 72.34°. Lambert conformal conic and Albers use the same northern region, 0–85°N, with
+standard parallels at 30°N and 60°N. Winkel Tripel and the remaining maps cover
+the entire sphere.
+Thus scores describe each map's displayed region; cropped regions are excluded
+from the sampling and normalization. Exact poles and isolated singularities are not sampled.
 
 Differentiate the projection numerically along two perpendicular unit tangent
 directions, using central great-circle steps of 1e-7 radians. Hold Goode's lobe

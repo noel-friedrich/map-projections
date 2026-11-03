@@ -59,5 +59,17 @@ export const projectionInfo = {
   "icosahedron": {
     "article": "Icosahedron",
     "text": "Projects the globe from its center onto twenty triangular faces, then opens them into a compact net. Shapes and areas become more distorted toward face edges."
+  },
+  "lambert-conic": {
+    "article": "Lambert_conformal_conic_projection",
+    "text": "Used for aviation and regional maps, preserving local angles. Shown at 0–85°N with standard parallels at 30°N and 60°N."
+  },
+  "albers": {
+    "article": "Albers_projection",
+    "text": "Used for regional and thematic maps, preserving relative areas. Shown at 0–85°N with standard parallels at 30°N and 60°N."
+  },
+  "winkel-tripel": {
+    "article": "Winkel_tripel_projection",
+    "text": "Used for National Geographic world maps. Combines Aitoff and equirectangular coordinates to balance area and shape distortion."
   }
 };

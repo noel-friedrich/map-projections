@@ -1,4 +1,4 @@
-import { createScene } from "./scene.js?v=platonic-unfoldings-1";
+import { createScene } from "./scene.js?v=conic-winkel-1";
 import { createModel } from "./model.js";
 import {
     getProjectionState,
@@ -13,6 +13,7 @@ import { projectionInfo } from "./projection-info.js";
 import { projectionCatalog } from "./projection-catalog.js";
 import { createProjectionChooser } from "./projection-chooser.js";
 import { distortionScores } from "./distortion-data.js";
+import { createProjectionStepList } from './projection-steps.js';
 
 const container = document.getElementById("view");
 const slider = document.getElementById("progress");
@@ -22,6 +23,7 @@ const status = document.getElementById("status");
 const infoPanel = document.getElementById("info-panel");
 const infoToggle = document.getElementById("info-toggle");
 const infoBackdrop = document.getElementById("info-backdrop");
+const stepList = createProjectionStepList(document.getElementById('projection-steps'), animateToStep);
 function setInfoVisible(visible) {
     const hadFocus = infoPanel.contains(document.activeElement);
     document.body.classList.toggle("info-open", visible);
@@ -42,7 +44,7 @@ const distortionMaximums = {
 // Keep simulation precision independent of range-input stepping and URL formatting.
 let currentProgress = Number(slider.value);
 loadUrlState();
-setInfoVisible(true);
+setInfoVisible(window.matchMedia('(min-width: 760px)').matches);
 const view = createScene(container);
 document
     .getElementById("zoom-in")
@@ -69,6 +71,13 @@ function updateProjectionInfo() {
     document.getElementById("info-description").textContent = info.text;
     document.getElementById("info-source").href = "https://en.wikipedia.org/wiki/" + info.article;
     updateDistortionChart();
+    stepList.setProjection(currentProjection);
+    stepList.setProgress(currentProgress / 100);
+}
+
+function animateToStep(progress) {
+    animateProgressTo(progress * 100);
+    if (window.matchMedia('(max-width: 759px)').matches) setInfoVisible(false);
 }
 
 function updateDistortionChart() {
@@ -137,11 +146,11 @@ function updateProgressTrack() {
         const start = checkpoints[i] * 100;
         const end = checkpoints[i + 1] * 100;
         const completed = Math.max(start, Math.min(end, progress * 100));
-        const blue = i % 2 === 0 ? "#9999FF" : "#0000FF";
+        const accent = i % 2 === 0 ? "var(--accent-light)" : "var(--accent)";
         const grey = i % 2 === 0 ? "#d5dce0" : "#bfc8ce";
         stops.push(
-            `${blue} ${start}%`,
-            `${blue} ${completed}%`,
+            `${accent} ${start}%`,
+            `${accent} ${completed}%`,
             `${grey} ${completed}%`,
             `${grey} ${end}%`,
         );
@@ -158,6 +167,7 @@ function updateProjection() {
     view.frame(state);
     slider.style.setProperty("--progress", `${currentProgress}%`);
     updateProgressTrack();
+    stepList.setProgress(currentProgress / 100);
     saveUrlState();
 }
 window.addEventListener("popstate", () => {
@@ -253,13 +263,17 @@ function stepProjection(backward) {
     const to =
         checkpoint(currentProjection, (progressAnimation?.to ?? from) / 100) *
         100;
+    animateProgressTo(to);
+}
+
+function animateProgressTo(to) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         progressAnimation = null;
         currentProgress = to;
         slider.value = currentProgress;
         updateProjection();
     } else {
-        progressAnimation = { from, to, start: performance.now() };
+        progressAnimation = { from: currentProgress, to, start: performance.now() };
     }
 }
 document.getElementById("previous-stage").addEventListener("click", () => stepProjection(true));

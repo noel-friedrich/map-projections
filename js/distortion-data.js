@@ -60,5 +60,17 @@ export const distortionScores = {
   "icosahedron": {
     "areaDifference": 10.820763,
     "angleError": 3.408792
+  },
+  "lambert-conic": {
+    "areaDifference": 15.466167,
+    "angleError": 0
+  },
+  "albers": {
+    "areaDifference": 0,
+    "angleError": 8.215484
+  },
+  "winkel-tripel": {
+    "areaDifference": 18.10474,
+    "angleError": 23.268827
   }
 };

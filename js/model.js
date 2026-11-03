@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { projectPoint, projectAzimuthal } from "./projections.js";
+import { projectPoint, projectAzimuthal, getProjectionState } from "./projections.js";
 import { createMapMaterial } from "./texture.js";
 import { GOODE_LOBES } from "./pseudocylindrical.js";
 import { createPolyhedralCoordinate, animatePolyhedral } from './platonic.js';
@@ -236,6 +236,25 @@ function createTetrahedronGuide() {
     return guide;
 }
 
+function createConicGuide(type) {
+    const state = getProjectionState(type, 0.25), vertices = [];
+    const line = (lon1, lat1, lon2, lat2) => {
+        for (const [longitude, latitude] of [[lon1, lat1], [lon2, lat2]]) {
+            const p = projectPoint(longitude, latitude, state, {});
+            vertices.push(p.x, p.y, p.z);
+        }
+    };
+    for (const degrees of [0, 30, 60, 85]) for (let i = 0; i < 96; i++) {
+        line(-Math.PI + i * Math.PI / 48, degrees * Math.PI / 180,
+            -Math.PI + (i + 1) * Math.PI / 48, degrees * Math.PI / 180);
+    }
+    for (let i = 0; i < 12; i++) line(-Math.PI + i * Math.PI / 6, state.latitudeMin, -Math.PI + i * Math.PI / 6, state.latitudeMax);
+    const wire = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)),
+        new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.3 }));
+    wire.name = `${type}-guide`;
+    return wire;
+}
+
 export function createModel() {
     let { geometry, coordinates } = createSurfaceGeometry();
     const surfaces = new Map([["standard", { geometry, coordinates }]]);
@@ -257,6 +276,7 @@ export function createModel() {
     const tetrahedronGuide = createTetrahedronGuide();
     guide.add(cylinderGuide, tetrahedronGuide);
     const solidGuides = new Map();
+    const conicGuides = new Map();
     const position = { x: 0, y: 0, z: 0 };
 
     function update(state) {
@@ -278,7 +298,9 @@ export function createModel() {
         positions = geometry.attributes.position;
         uv = geometry.attributes.uv;
         sphereDirections = geometry.attributes.sphereDirection;
-        const updateGeography = surface.latitudeRange !== state.latitudeRange;
+        const latitudeMin = state.latitudeMin ?? -state.latitudeRange;
+        const latitudeMax = state.latitudeMax ?? state.latitudeRange;
+        const updateGeography = surface.latitudeMin !== latitudeMin || surface.latitudeMax !== latitudeMax;
         const tetraAnimation = state.tetrahedral
             ? createTetrahedralAnimation(state.progress)
             : null;
@@ -290,8 +312,7 @@ export function createModel() {
                 latitude: fullLatitude,
                 lobeCenter,
             } = coordinate;
-            const latitude =
-                (fullLatitude * state.latitudeRange) / (Math.PI / 2);
+            const latitude = latitudeMin + (fullLatitude + Math.PI / 2) * (latitudeMax - latitudeMin) / Math.PI;
             if (state.polyhedral)
                 animatePolyhedral(coordinate.polyhedral, state.progress, position, state.animation);
             else if (state.tetrahedral)
@@ -332,13 +353,14 @@ export function createModel() {
         if (updateGeography) {
             sphereDirections.needsUpdate = true;
             uv.needsUpdate = true;
-            surface.latitudeRange = state.latitudeRange;
+            surface.latitudeMin = latitudeMin;
+            surface.latitudeMax = latitudeMax;
         }
         // This unlit material and its depth-only shadow pass do not use normals.
         // Culling is disabled; recompute raycast bounds lazily only when clicked.
         geometry.boundingSphere = null;
         const cylindrical =
-            !state.pseudo && !state.tetrahedral && !state.azimuthal && !state.polyhedral;
+            !state.pseudo && !state.tetrahedral && !state.azimuthal && !state.polyhedral && !state.conic && !state.winkel;
         cylinderGuide.visible = cylindrical && state.project < 1;
         tetrahedronGuide.visible =
             Boolean(state.tetrahedral) && state.progress < 0.5;
@@ -355,7 +377,13 @@ export function createModel() {
             guide.add(wire);
         }
         for (const [type, wire] of solidGuides) wire.visible = Boolean(state.polyhedral) && state.type === type && state.progress < 0.5;
-        guide.visible = cylinderGuide.visible || tetrahedronGuide.visible || (Boolean(state.polyhedral) && state.progress < 0.5);
+        if (state.conic && !conicGuides.has(state.type)) {
+            const wire = createConicGuide(state.type);
+            conicGuides.set(state.type, wire);
+            guide.add(wire);
+        }
+        for (const [type, wire] of conicGuides) wire.visible = Boolean(state.conic) && state.type === type && state.transfer < 1;
+        guide.visible = guide.children.some(child => child.visible === true);
         if (state.tetrahedral)
             tetrahedronGuide.material.opacity =
                 0.3 * (1 - Math.min(1, state.progress * 2));

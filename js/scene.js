@@ -143,6 +143,15 @@ export function createScene(container) {
                 Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
             cameraScale = Math.max(1, fitDistance / (sphereDistance * Math.max(1, 1 / camera.aspect)));
         }
+        if (state.frameExtent) {
+            const [halfWidth, halfHeight, depth] = state.frameExtent;
+            // Reserve vertical room for the stage caption and slider controls.
+            const usableHeight = Math.max(100, container.clientHeight - 160);
+            const verticalFit = halfHeight * container.clientHeight / usableHeight;
+            const fitDistance = depth + 1.1 * Math.max(halfWidth / camera.aspect, verticalFit) /
+                Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+            cameraScale = Math.max(1, fitDistance / (sphereDistance * Math.max(1, 1 / camera.aspect)));
+        }
         camera.position
             .sub(controls.target)
             .multiplyScalar(cameraScale / previousCameraScale)

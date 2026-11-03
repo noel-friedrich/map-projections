@@ -77,3 +77,30 @@ Compact, non-overlapping nets are selected offline by find-platonic-nets.mjs;
 the tetrahedron uses the triangular star and the cube the familiar cross.
 The chosen trees are stored in js/platonic-nets.js, with no layout search in the
 render loop. All five have checkpoints at sphere, closed solid, and flat net.
+
+Lambert conformal conic and Albers equal-area conic:
+Unit-sphere equations with standard parallels 30°N and 60°N. Both display the
+same 0–85°N region so the two conics can be compared on equal terms. Coordinates
+are translated vertically to center the complete sector; this does not affect
+scale or distortion. The regional extent is stated in both info summaries.
+https://proj.org/en/stable/operations/projections/lcc.html
+https://proj.org/en/stable/operations/projections/aea.html
+https://github.com/d3/d3-geo/blob/main/src/projection/conicConformal.js
+https://github.com/d3/d3-geo/blob/main/src/projection/conicEqualArea.js
+
+Conic checkpoints: northern hemisphere → perspective cone → opened cone →
+flat sector → exact Lambert/Albers latitude spacing. The intermediate cone is
+an illustrative central projection, not a claim that the final conformal or
+equal-area projection is perspective. Opening and flattening are developable:
+slant distances and parallel arc lengths are unchanged. The last stage changes
+spacing along the flat sector to satisfy the final projection's equations.
+
+Winkel Tripel:
+https://proj.org/en/stable/operations/projections/wintri.html
+https://github.com/d3/d3-geo-projection/blob/main/src/aitoff.js
+https://github.com/d3/d3-geo-projection/blob/main/src/winkel3.js
+Uses cos(standard parallel) = 2/pi. Checkpoints: globe → longitudes halved →
+azimuthal equidistant disk → horizontally doubled Aitoff ellipse →
+Winkel Tripel, moving directly halfway toward equirectangular coordinates.
+The last three stages are planar; there is no separate rectangle stop.
+The final blend is exactly 50/50.

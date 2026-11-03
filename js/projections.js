@@ -1,4 +1,7 @@
 import { latitudeProfile, goodeLobeCenter } from "./pseudocylindrical.js";
+import { CONIC_TYPES, createConicState, projectConic } from './conic.js';
+import { projectWinkel } from './winkel.js';
+import { constructionStages } from './construction-stages.js';
 import { PLATONIC_SOLIDS, createPolyhedralCoordinate, createPolyhedralAnimation, animatePolyhedral } from './platonic.js';
 import {
     createTetrahedralCoordinate,
@@ -12,6 +15,7 @@ const lerp = (a, b, t) => (1 - t) * a + t * b;
 const clamp01 = (value) => Math.max(0, Math.min(1, value));
 
 export function getProjectionCheckpoints(type) {
+    if (constructionStages[type]) return constructionStages[type].map((_, index, stages) => index / (stages.length - 1));
     if (PLATONIC_SOLIDS[type]) return [0, 0.5, 1];
     if (type === "mercator") return [0, 1 / 3, 2 / 3, 1];
     if (type === "goode") return [0, 0.25, 0.5, 0.75, 1];
@@ -45,6 +49,13 @@ export function getPreviousProjectionCheckpoint(type, progress) {
 }
 
 export function getProjectionState(type, progress) {
+    if (CONIC_TYPES.includes(type) || type === 'winkel-tripel') {
+        const state = type === 'winkel-tripel'
+            ? { type, progress, winkel: true, latitudeRange: Math.PI / 2 }
+            : createConicState(type, progress);
+        state.frameExtent = constructionExtent(state);
+        return state;
+    }
     if (PLATONIC_SOLIDS[type]) {
         const solid = PLATONIC_SOLIDS[type];
         return { type, progress, polyhedral: true, solid,
@@ -123,6 +134,22 @@ export function getProjectionState(type, progress) {
     };
 }
 
+function constructionExtent(state) {
+    const extent = [1, 1, 1];
+    const surfaces = state.conic && state.transfer < 1 ? [state, createConicState(state.type, 0.25)] : [state];
+    for (const surface of surfaces) {
+        const min = surface.latitudeMin ?? -surface.latitudeRange;
+        const max = surface.latitudeMax ?? surface.latitudeRange;
+        for (let row = 0; row <= 16; row++) for (let column = 0; column <= 32; column++) {
+            const p = projectPoint(-Math.PI + 2 * Math.PI * column / 32, min + (max - min) * row / 16, surface, {});
+            extent[0] = Math.max(extent[0], Math.abs(p.x));
+            extent[1] = Math.max(extent[1], Math.abs(p.y));
+            extent[2] = Math.max(extent[2], p.z);
+        }
+    }
+    return extent;
+}
+
 function longitudeProfile(longitude, state) {
     let column = state.columns.get(longitude);
     if (!column) {
@@ -141,6 +168,8 @@ function longitudeProfile(longitude, state) {
 
 // Write into a reusable position object to avoid allocations for every vertex.
 export function projectPoint(longitude, latitude, state, position, lobeCenter) {
+    if (state.conic) return projectConic(longitude, latitude, state, position);
+    if (state.winkel) return projectWinkel(longitude, latitude, state.progress, position);
     if (state.polyhedral) {
         const direction = [Math.cos(latitude) * Math.sin(longitude), Math.sin(latitude), Math.cos(latitude) * Math.cos(longitude)];
         return animatePolyhedral(createPolyhedralCoordinate(state.type, direction), state.progress, position, state.animation);
