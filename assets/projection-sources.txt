@@ -57,3 +57,23 @@ https://github.com/d3/d3-geo-polygon/blob/main/src/tetrahedralLee.js
 https://github.com/d3/d3-geo-polygon#geotetrahedrallee
 The four faces form a regular tetrahedron circumscribed about the unit sphere.
 Three faces rotate rigidly about the edges of the front face to form the net.
+
+Platonic-solid unfoldings (Tetrahedron, Cube, Octahedron, Dodecahedron, Icosahedron):
+These are central/gnomonic projections onto regular tangent face planes, not
+Lee's conformal mapping, Dymaxion, or an equal-area polyhedral projection.
+For a unit geographic direction d and unit face normal n, the face coordinate
+is d / dot(d,n), choosing the outward face with the largest dot product.
+https://en.wikipedia.org/wiki/Polyhedral_map_projection
+https://en.wikipedia.org/wiki/Gnomonic_projection
+https://en.wikipedia.org/wiki/Tetrahedron
+https://en.wikipedia.org/wiki/Cube
+https://en.wikipedia.org/wiki/Octahedron
+https://en.wikipedia.org/wiki/Dodecahedron
+https://en.wikipedia.org/wiki/Icosahedron
+
+The first animation stage moves the unit sphere onto a circumscribed regular
+solid. The second rotates rigid faces about shared edges in a spanning tree.
+Compact, non-overlapping nets are selected offline by find-platonic-nets.mjs;
+the tetrahedron uses the triangular star and the cube the familiar cross.
+The chosen trees are stored in js/platonic-nets.js, with no layout search in the
+render loop. All five have checkpoints at sphere, closed solid, and flat net.

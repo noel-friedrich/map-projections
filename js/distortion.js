@@ -1,5 +1,6 @@
 import { getProjectionState, projectPoint } from "./projections.js";
 import { goodeLobeCenter } from "./pseudocylindrical.js";
+import { createPolyhedralCoordinate, animatePolyhedral } from './platonic.js';
 import {
     createTetrahedralCoordinate,
     animateTetrahedral,
@@ -66,7 +67,7 @@ export function measureProjectionDistortion(type, sampleCount = 524288) {
             type === "goode"
                 ? goodeLobeCenter(longitude, Math.asin(y))
                 : undefined;
-        const face = state.tetrahedral
+        const face = state.polyhedral ? createPolyhedralCoordinate(type, direction).face.id : state.tetrahedral
             ? createTetrahedralCoordinate(direction).face.id
             : undefined;
         const project = (point) => {
@@ -76,7 +77,9 @@ export function measureProjectionDistortion(type, sampleCount = 524288) {
                 sampleLongitude -= 2 * Math.PI;
             if (sampleLongitude - longitude < -Math.PI)
                 sampleLongitude += 2 * Math.PI;
-            const result = state.tetrahedral
+            const result = state.polyhedral
+                ? animatePolyhedral(createPolyhedralCoordinate(type, point, face), 1, {}, state.animation)
+                : state.tetrahedral
                 ? animateTetrahedral(
                       createTetrahedralCoordinate(point, face),
                       1,

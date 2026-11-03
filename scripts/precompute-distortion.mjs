@@ -1,19 +1,9 @@
 import { writeFile } from "node:fs/promises";
+import { projectionCatalog } from "../js/projection-catalog.js";
 import { measureProjectionDistortion } from "../js/distortion.js";
 
 const sampleCount = Number(process.argv[2] ?? 524288);
-const types = [
-    "mercator",
-    "same-height",
-    "classic",
-    "sinusoidal",
-    "robinson",
-    "equal-earth",
-    "goode",
-    "equirectangular",
-    "tetrahedral",
-    "lambert-azimuthal",
-];
+const types = projectionCatalog.map(item => item.id);
 const scores = Object.fromEntries(
     types.map((type) => [type, measureProjectionDistortion(type, sampleCount)]),
 );

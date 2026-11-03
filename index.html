@@ -4,7 +4,7 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>3D Map Projections Demo</title>
-        <link rel="stylesheet" href="./assets/styles.css?v=zoom-controls-2" />
+        <link rel="stylesheet" href="./assets/styles.css?v=projection-grid-1" />
         <script type="importmap">
             {
                 "imports": {
@@ -17,119 +17,15 @@
     <body>
         <main>
             <div id="view" aria-label="Interactive 3D map projection"></div>
-            <aside id="distortion-controls" aria-label="Map distortion">
-                <button
-                    id="distortion-toggle"
-                    class="icon-button"
-                    type="button"
-                    aria-label="Show distortion chart"
-                    aria-controls="distortion-chart"
-                    aria-expanded="false"
-                    title="Show distortion chart (C)"
-                >
-                    <svg
-                        viewBox="0 0 16 16"
-                        width="16"
-                        height="16"
-                        aria-hidden="true"
-                    >
-                        <path d="m6 3 5 5-5 5" />
-                    </svg>
-                </button>
-                <div
-                    id="distortion-chart"
-                    hidden
-                    aria-label="Average distortion of the completed projection"
-                >
-                    <div class="distortion-bars">
-                        <div
-                            class="distortion-column"
-                            title="Average area difference (%): mean absolute percentage difference after normalizing total map area. Full height is the worst area score among these maps."
-                        >
-                            <span
-                                class="distortion-value"
-                                id="area-distortion-value"
-                            ></span>
-                            <div class="distortion-axis" aria-hidden="true">
-                                <div class="distortion-track">
-                                    <div
-                                        id="area-distortion-fill"
-                                        class="distortion-fill"
-                                    ></div>
-                                </div>
-                                <div
-                                    id="area-distortion-ticks"
-                                    class="distortion-ticks"
-                                ></div>
-                            </div>
-                            <span>Area</span>
-                        </div>
-                        <div
-                            class="distortion-column"
-                            title="Average angle error (degrees): mean of the worst local angle change. Full height is the worst angle score among these maps."
-                        >
-                            <span
-                                class="distortion-value"
-                                id="angle-distortion-value"
-                            ></span>
-                            <div class="distortion-axis" aria-hidden="true">
-                                <div class="distortion-track">
-                                    <div
-                                        id="angle-distortion-fill"
-                                        class="distortion-fill"
-                                    ></div>
-                                </div>
-                                <div
-                                    id="angle-distortion-ticks"
-                                    class="distortion-ticks"
-                                ></div>
-                            </div>
-                            <span>Angles</span>
-                        </div>
-                    </div>
-                    <p>Average Error</p>
-                </div>
+            <button id="info-toggle" class="icon-button" aria-label="Open info" aria-expanded="false" aria-controls="info-panel"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v6M10 5v1"/></svg></button>
+            <div id="info-backdrop" hidden></div>
+            <aside id="info-panel" inert aria-label="Projection information">
+                <header><h1 id="info-name"></h1><button id="choose-projection" class="icon-button" aria-label="Choose projection" aria-haspopup="dialog"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="m5 8 5 5 5-5"/></svg></button></header>
+                <p id="info-description"></p><a id="info-source" target="_blank" rel="noopener noreferrer">Wikipedia ↗</a>
+                <section aria-label="Average error"><h2>Average Error</h2>
+<div class="error-row"><span>Angles</span><output id="angle-distortion-value"></output></div><div class="distortion-axis"><div class="distortion-track"><div id="angle-distortion-fill" class="distortion-fill"></div></div><div id="angle-distortion-ticks" class="distortion-ticks" aria-hidden="true"></div></div><div class="error-row"><span>Area</span><output id="area-distortion-value"></output></div><div class="distortion-axis"><div class="distortion-track"><div id="area-distortion-fill" class="distortion-fill"></div></div><div id="area-distortion-ticks" class="distortion-ticks" aria-hidden="true"></div></div></section>
             </aside>
-            <div id="projection-controls">
-                <div id="view-controls">
-                    <select id="projection" aria-label="Projection">
-                        <option value="mercator">Mercator</option>
-                        <option value="same-height">
-                            Lambert cylindrical equal-area
-                        </option>
-                        <option value="classic">
-                            central cylindrical projection
-                        </option>
-                        <option value="sinusoidal">Sinusoidal</option>
-                        <option value="robinson">Robinson</option>
-                        <option value="equal-earth">Equal Earth</option>
-                        <option value="goode">
-                            Goode homolosine (interrupted)
-                        </option>
-                        <option value="equirectangular">
-                            Equirectangular (Plate Carrée)
-                        </option>
-                        <option value="tetrahedral">
-                            Lee conformal tetrahedral
-                        </option>
-                        <option value="lambert-azimuthal">
-                            Lambert azimuthal equal-area
-                        </option>
-                    </select>
-                    <button
-                        id="reset"
-                        type="button"
-                        title="Reset view and exit guessing mode"
-                    >
-                        Reset
-                    </button>
-                </div>
-                <div
-                    id="projection-properties"
-                    aria-label="Properties of the completed projection"
-                    aria-live="polite"
-                ></div>
-            </div>
+            <button id="reset" type="button">Reset</button>
             <div id="zoom-controls" role="group" aria-label="Zoom controls">
                 <button
                     id="zoom-in"
@@ -150,18 +46,22 @@
                     −
                 </button>
             </div>
-            <input
+            <div id="progress-controls"><button id="previous-stage" class="icon-button" aria-label="Previous stage">&lt;</button><input
                 id="progress"
                 aria-label="Projection progress"
-                title="N: next stage · B: previous stage"
                 type="range"
                 min="0"
                 max="100"
                 step="any"
-                value="0"
+                value="100"
             />
+            <button id="next-stage" class="icon-button" aria-label="Next stage">&gt;</button></div>
             <p id="status" role="status" hidden></p>
         </main>
-        <script type="module" src="./js/main.js?v=zoom-controls-3"></script>
+        <dialog id="projection-dialog" aria-labelledby="projection-dialog-title">
+            <header><h2 id="projection-dialog-title">Choose a projection</h2><button id="close-projection-dialog" class="icon-button" aria-label="Close projection chooser">×</button></header>
+            <div id="projection-grid"></div>
+        </dialog>
+        <script type="module" src="./js/main.js?v=platonic-unfoldings-1"></script>
     </body>
 </html>

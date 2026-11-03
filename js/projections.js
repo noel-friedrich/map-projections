@@ -1,4 +1,5 @@
 import { latitudeProfile, goodeLobeCenter } from "./pseudocylindrical.js";
+import { PLATONIC_SOLIDS, createPolyhedralCoordinate, createPolyhedralAnimation, animatePolyhedral } from './platonic.js';
 import {
     createTetrahedralCoordinate,
     animateTetrahedral,
@@ -11,6 +12,7 @@ const lerp = (a, b, t) => (1 - t) * a + t * b;
 const clamp01 = (value) => Math.max(0, Math.min(1, value));
 
 export function getProjectionCheckpoints(type) {
+    if (PLATONIC_SOLIDS[type]) return [0, 0.5, 1];
     if (type === "mercator") return [0, 1 / 3, 2 / 3, 1];
     if (type === "goode") return [0, 0.25, 0.5, 0.75, 1];
     return [
@@ -43,6 +45,11 @@ export function getPreviousProjectionCheckpoint(type, progress) {
 }
 
 export function getProjectionState(type, progress) {
+    if (PLATONIC_SOLIDS[type]) {
+        const solid = PLATONIC_SOLIDS[type];
+        return { type, progress, polyhedral: true, solid,
+            animation: createPolyhedralAnimation(solid, progress), latitudeRange: Math.PI / 2 };
+    }
     if (type === "tetrahedral" || type === "lambert-azimuthal") {
         return {
             type,
@@ -134,6 +141,10 @@ function longitudeProfile(longitude, state) {
 
 // Write into a reusable position object to avoid allocations for every vertex.
 export function projectPoint(longitude, latitude, state, position, lobeCenter) {
+    if (state.polyhedral) {
+        const direction = [Math.cos(latitude) * Math.sin(longitude), Math.sin(latitude), Math.cos(latitude) * Math.cos(longitude)];
+        return animatePolyhedral(createPolyhedralCoordinate(state.type, direction), state.progress, position, state.animation);
+    }
     if (state.tetrahedral) {
         const direction = [
             Math.cos(latitude) * Math.sin(longitude),

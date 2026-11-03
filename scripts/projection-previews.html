@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Projection preview renderer</title>
+    <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+    </script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { createModel } from '../js/model.js';
+import { getProjectionState } from '../js/projections.js';
+import { loadMapTexture } from '../js/texture.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(640, 400);
+renderer.setClearColor(0x000000, 0);
+document.body.append(renderer.domElement);
+const scene = new THREE.Scene();
+const model = createModel();
+model.setTexture(await loadMapTexture(renderer));
+scene.add(model.mesh);
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+
+window.renderProjectionPreview = type => {
+    model.resetRotation();
+    model.update(getProjectionState(type, 1));
+    model.mesh.geometry.computeBoundingBox();
+    const bounds = model.mesh.geometry.boundingBox;
+    const center = bounds.getCenter(new THREE.Vector3());
+    const size = bounds.getSize(new THREE.Vector3());
+    const halfHeight = Math.max(size.y / 2, size.x / (2 * 1.6)) * 1.08;
+    camera.left = -halfHeight * 1.6;
+    camera.right = halfHeight * 1.6;
+    camera.top = halfHeight;
+    camera.bottom = -halfHeight;
+    camera.position.set(center.x, center.y, center.z + 20);
+    camera.lookAt(center);
+    camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+    return renderer.domElement.toDataURL('image/png');
+};
+</script>
+</body>
+</html>

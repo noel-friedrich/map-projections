@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { projectionCatalog } from "../js/projection-catalog.js";
 import {
     localDistortion,
     measureProjectionDistortion,
@@ -64,13 +65,7 @@ test("numerical measurements recover conformal projections, including tetrahedra
 });
 
 test("generated scores cover every selectable projection and respect the fixed bar scales", () => {
-    const html = readFileSync(
-        new URL("../index.html", import.meta.url),
-        "utf8",
-    );
-    const types = [...html.matchAll(/<option value="([^"]+)">/g)].map(
-        (match) => match[1],
-    );
+    const types = projectionCatalog.map(item => item.id);
     assert.deepEqual(Object.keys(distortionScores).sort(), types.sort());
     for (const score of Object.values(distortionScores)) {
         assert.ok(
@@ -87,5 +82,14 @@ test("generated scores cover every selectable projection and respect the fixed b
     for (const type of ["classic", "equirectangular", "robinson"]) {
         assert.ok(distortionScores[type].areaDifference > 0);
         assert.ok(distortionScores[type].angleError > 0);
+    }
+});
+
+test("every projection has a generated 640 by 400 PNG preview", () => {
+    for (const { id } of projectionCatalog) {
+        const png = readFileSync(new URL(`../assets/projections/${id}.png`, import.meta.url));
+        assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', id);
+        assert.equal(png.readUInt32BE(16), 640, id);
+        assert.equal(png.readUInt32BE(20), 400, id);
     }
 });

@@ -137,6 +137,12 @@ export function createScene(container) {
                 ? THREE.MathUtils.lerp(1, fitScale, state.progress)
                 : fitScale;
         }
+        if (state.polyhedral) {
+            const [halfWidth, halfHeight, depth] = state.animation.extent;
+            const fitDistance = depth + 1.15 * Math.max(halfWidth / camera.aspect, halfHeight) /
+                Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+            cameraScale = Math.max(1, fitDistance / (sphereDistance * Math.max(1, 1 / camera.aspect)));
+        }
         camera.position
             .sub(controls.target)
             .multiplyScalar(cameraScale / previousCameraScale)

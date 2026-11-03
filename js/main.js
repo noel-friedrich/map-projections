@@ -1,4 +1,4 @@
-import { createScene } from "./scene.js?v=zoom-controls-3";
+import { createScene } from "./scene.js?v=platonic-unfoldings-1";
 import { createModel } from "./model.js";
 import {
     getProjectionState,
@@ -9,52 +9,40 @@ import {
 import { loadMapTexture } from "./texture.js";
 import { createEarthControls } from "./controls.js";
 import { createMapAnnotations } from "./annotations.js";
+import { projectionInfo } from "./projection-info.js";
+import { projectionCatalog } from "./projection-catalog.js";
+import { createProjectionChooser } from "./projection-chooser.js";
 import { distortionScores } from "./distortion-data.js";
 
 const container = document.getElementById("view");
 const slider = document.getElementById("progress");
-const projection = document.getElementById("projection");
+let currentProjection = projectionCatalog[0].id;
+const projectionDialog = createProjectionChooser(chooseProjection);
 const status = document.getElementById("status");
-const propertyTags = document.getElementById("projection-properties");
-const distortionChart = document.getElementById("distortion-chart");
-const distortionToggle = document.getElementById("distortion-toggle");
+const infoPanel = document.getElementById("info-panel");
+const infoToggle = document.getElementById("info-toggle");
+const infoBackdrop = document.getElementById("info-backdrop");
+function setInfoVisible(visible) {
+    const hadFocus = infoPanel.contains(document.activeElement);
+    document.body.classList.toggle("info-open", visible);
+    infoPanel.inert = !visible;
+    infoBackdrop.hidden = !visible;
+    infoToggle.setAttribute("aria-expanded", String(visible));
+    infoToggle.setAttribute("aria-label", visible ? "Close info" : "Open info");
+    if (visible) document.getElementById("choose-projection").focus();
+    else if (hadFocus) infoToggle.focus();
+}
+infoToggle.addEventListener("click", () => setInfoVisible(infoPanel.inert));
+infoBackdrop.addEventListener("click", () => setInfoVisible(false));
 const distortionMaximums = {
-    area: Math.max(
-        ...Object.values(distortionScores).map((score) => score.areaDifference),
-    ),
-    angle: Math.max(
-        ...Object.values(distortionScores).map((score) => score.angleError),
-    ),
+    area: Math.ceil(Math.max(...Object.values(distortionScores).map(score => score.areaDifference)) / 20) * 20,
+    angle: Math.ceil(Math.max(...Object.values(distortionScores).map(score => score.angleError)) / 10) * 10,
 };
 
-function setDistortionChartVisible(visible) {
-    distortionChart.hidden = !visible;
-    distortionToggle.setAttribute("aria-expanded", String(visible));
-    const label = `${visible ? "Hide" : "Show"} distortion chart`;
-    distortionToggle.setAttribute("aria-label", label);
-    distortionToggle.title = `${label} (C)`;
-}
-
-distortionToggle.addEventListener("click", () =>
-    setDistortionChartVisible(distortionChart.hidden),
-);
 // Keep simulation precision independent of range-input stepping and URL formatting.
 let currentProgress = Number(slider.value);
-// Properties column: https://en.wikipedia.org/wiki/List_of_map_projections
-// Central cylindrical is classified as Perspective, outside these four tags.
-const projectionProperties = {
-    mercator: ["Conformal (Equal Angles)"],
-    "same-height": ["Equal-Area"],
-    classic: [],
-    sinusoidal: ["Equal-Area", "Equidistant"],
-    robinson: ["Compromise"],
-    "equal-earth": ["Equal-Area"],
-    goode: ["Equal-Area"],
-    equirectangular: ["Equidistant"],
-    tetrahedral: ["Conformal (Equal Angles)"],
-    "lambert-azimuthal": ["Equal-Area"],
-};
 loadUrlState();
+setInfoVisible(true);
 const view = createScene(container);
 document
     .getElementById("zoom-in")
@@ -73,41 +61,25 @@ const earthControls = createEarthControls(
 let progressAnimation = null;
 
 function setGuessingMode(enabled) {
-    projection.hidden = enabled;
-    propertyTags.hidden = enabled;
+    if (enabled) setInfoVisible(false);
 }
-
-function updateProjectionProperties() {
+function updateProjectionInfo() {
+    const info = projectionInfo[currentProjection];
+    document.getElementById("info-name").textContent = projectionCatalog.find(item => item.id === currentProjection).title;
+    document.getElementById("info-description").textContent = info.text;
+    document.getElementById("info-source").href = "https://en.wikipedia.org/wiki/" + info.article;
     updateDistortionChart();
-    propertyTags.replaceChildren(
-        ...projectionProperties[projection.value].map((label) => {
-            const tag = document.createElement("a");
-            tag.className = "projection-tag";
-            tag.textContent = label;
-            tag.href =
-                "https://en.wikipedia.org/wiki/List_of_map_projections#Table_of_projections";
-            tag.target = "_blank";
-            tag.rel = "noopener noreferrer";
-            tag.title =
-                label === "Equidistant"
-                    ? projection.value === "sinusoidal"
-                        ? "Sinusoidal preserves distances along parallels. Source: Wikipedia."
-                        : "Equirectangular preserves distances along meridians. Source: Wikipedia."
-                    : "Property of the completed projection. Source: Wikipedia.";
-            return tag;
-        }),
-    );
 }
 
 function updateDistortionChart() {
-    const { areaDifference, angleError } = distortionScores[projection.value];
+    const { areaDifference, angleError } = distortionScores[currentProjection];
     for (const [id, value, maximum, unit] of [
         ["area", areaDifference, distortionMaximums.area, "%"],
         ["angle", angleError, distortionMaximums.angle, "°"],
     ]) {
         document.getElementById(`${id}-distortion-value`).textContent =
             `${value.toFixed(1)}${unit}`;
-        document.getElementById(`${id}-distortion-fill`).style.height =
+        document.getElementById(`${id}-distortion-fill`).style.width =
             `${maximum > 0 ? (value / maximum) * 100 : 0}%`;
         const roughStep = maximum > 0 ? maximum / 5 : 1;
         const magnitude = 10 ** Math.floor(Math.log10(roughStep));
@@ -123,7 +95,7 @@ function updateDistortionChart() {
             ...tickValues.map((value) => {
                 const tick = document.createElement("span");
                 tick.className = "distortion-tick";
-                tick.style.bottom = `${maximum > 0 ? (value / maximum) * 100 : 0}%`;
+                tick.style.left = `${maximum > 0 ? (value / maximum) * 100 : 0}%`;
                 tick.textContent = value.toFixed(decimals);
                 return tick;
             }),
@@ -134,11 +106,9 @@ function updateDistortionChart() {
 function loadUrlState() {
     const params = new URL(window.location.href).searchParams;
     const savedProjection = params.get("projection");
-    projection.value = [...projection.options].some(
-        (option) => option.value === savedProjection,
-    )
+    currentProjection = projectionCatalog.some(item => item.id === savedProjection)
         ? savedProjection
-        : projection.options[0].value;
+        : projectionCatalog[0].id;
     const savedProgress = params.get("progress");
     const progress =
         savedProgress !== null && savedProgress.trim() !== ""
@@ -148,26 +118,26 @@ function loadUrlState() {
         ? Math.max(0, Math.min(100, progress))
         : Number(slider.defaultValue);
     slider.value = currentProgress;
-    updateProjectionProperties();
+    updateProjectionInfo();
 }
 
 function saveUrlState() {
     const url = new URL(window.location.href);
-    url.searchParams.set("projection", projection.value);
+    url.searchParams.set("projection", currentProjection);
     url.searchParams.set("progress", String(Math.round(currentProgress)));
     if (url.href !== window.location.href)
         window.history.replaceState(window.history.state, "", url);
 }
 
 function updateProgressTrack() {
-    const checkpoints = getProjectionCheckpoints(projection.value);
+    const checkpoints = getProjectionCheckpoints(currentProjection);
     const progress = currentProgress / 100;
     const stops = [];
     for (let i = 0; i < checkpoints.length - 1; i++) {
         const start = checkpoints[i] * 100;
         const end = checkpoints[i + 1] * 100;
         const completed = Math.max(start, Math.min(end, progress * 100));
-        const blue = i % 2 === 0 ? "#9cb4c5" : "#718b9e";
+        const blue = i % 2 === 0 ? "#9999FF" : "#0000FF";
         const grey = i % 2 === 0 ? "#d5dce0" : "#bfc8ce";
         stops.push(
             `${blue} ${start}%`,
@@ -183,7 +153,7 @@ function updateProgressTrack() {
 }
 
 function updateProjection() {
-    const state = getProjectionState(projection.value, currentProgress / 100);
+    const state = getProjectionState(currentProjection, currentProgress / 100);
     model.update(state);
     view.frame(state);
     slider.style.setProperty("--progress", `${currentProgress}%`);
@@ -204,12 +174,24 @@ slider.addEventListener("input", () => {
     currentProgress = Number(slider.value);
     updateProjection();
 });
-projection.addEventListener("change", () => {
+function chooseProjection(id) {
+    currentProjection = id;
     progressAnimation = null;
-    updateProjectionProperties();
+    earthControls.reset();
+    model.resetRotation();
+    view.reset();
+    currentProgress = 100;
+    slider.value = currentProgress;
+    updateProjectionInfo();
     updateProjection();
-});
+}
 window.addEventListener("keydown", (event) => {
+    if (projectionDialog.open && !(event.ctrlKey && /^(?:Digit|Numpad)[0-9]$/.test(event.code))) return;
+    if (event.code === "Escape" && !event.repeat) {
+        event.preventDefault();
+        setInfoVisible(infoPanel.inert);
+        return;
+    }
     // The tenth projection uses 0, matching its position after 1–9 on the keyboard.
     const numberKey = /^(?:Digit|Numpad)([0-9])$/.exec(event.code);
     if (
@@ -227,14 +209,15 @@ window.addEventListener("keydown", (event) => {
         )
             return;
         event.preventDefault();
-        setDistortionChartVisible(false);
+        setInfoVisible(false);
         progressAnimation = null;
         earthControls.reset();
         model.resetRotation();
         view.reset();
-        projection.selectedIndex = (Number(numberKey[1]) || 10) - 1;
+        projectionDialog.close();
+        currentProjection = projectionCatalog[(Number(numberKey[1]) || 10) - 1].id;
         setGuessingMode(true);
-        updateProjectionProperties();
+        updateProjectionInfo();
         currentProgress = 100;
         slider.value = currentProgress;
         updateProjection();
@@ -243,8 +226,9 @@ window.addEventListener("keydown", (event) => {
         view.renderer.domElement.focus({ preventScroll: true });
         return;
     }
+    if (!infoPanel.inert) return;
     if (
-        !["KeyN", "KeyB", "KeyC"].includes(event.code) ||
+        !["KeyN", "KeyB"].includes(event.code) ||
         event.repeat ||
         event.ctrlKey ||
         event.metaKey ||
@@ -258,17 +242,16 @@ window.addEventListener("keydown", (event) => {
     )
         return;
     event.preventDefault();
-    if (event.code === "KeyC") {
-        setDistortionChartVisible(distortionChart.hidden);
-        return;
-    }
+    stepProjection(event.code === "KeyB");
+});
+function stepProjection(backward) {
     const from = currentProgress;
     const checkpoint =
-        event.code === "KeyB"
+        backward
             ? getPreviousProjectionCheckpoint
             : getNextProjectionCheckpoint;
     const to =
-        checkpoint(projection.value, (progressAnimation?.to ?? from) / 100) *
+        checkpoint(currentProjection, (progressAnimation?.to ?? from) / 100) *
         100;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         progressAnimation = null;
@@ -278,7 +261,9 @@ window.addEventListener("keydown", (event) => {
     } else {
         progressAnimation = { from, to, start: performance.now() };
     }
-});
+}
+document.getElementById("previous-stage").addEventListener("click", () => stepProjection(true));
+document.getElementById("next-stage").addEventListener("click", () => stepProjection(false));
 updateProjection();
 
 function resize() {

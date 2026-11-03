@@ -1,6 +1,6 @@
 # Distortion chart
 
-The chart describes the **completed projection**, even while the slider shows
+The info panel’s horizontal chart describes the **completed projection**, even while the slider shows
 an intermediate surface. Camera movement and globe rotation do not change it.
 Scores are precomputed; there is no numerical sampling in the rendering loop.
 
@@ -44,16 +44,23 @@ Zero means equal-area. The theoretical range is 0–200%.
 angle change over Earth, rather than taking one worst point on the entire map.
 Zero means conformal. Its theoretical range is 0–180°.
 
-Each bar runs from zero to the highest score in its category among the available
-maps, so the worst map fills it completely. Labeled ticks use round increments
+Each bar runs from zero to the highest score among the available maps rounded
+up to a multiple of 20% for area or 10° for angles. Labeled ticks use round increments
 chosen from powers of ten times 1, 2, or 5 (currently 20% and 10°).
 The scales remain fixed when
 switching projections, and update automatically if the precomputed scores change.
 
-The two bar heights use different units and must not be interpreted as a common
+The two bar widths use different units and must not be interpreted as a common
 combined score. These local measures do not penalize interruptions or overlaps.
 
 Numerical residuals below 0.0001 are rounded to zero. No projection-specific
 property labels are used to override the measured values. Stored scores retain
 six decimal places for reproducibility, while the chart displays one decimal
 place; values are numerical estimates, not exact global integrals.
+
+For the five Platonic unfoldings, the sampling locks the solid face when taking
+local derivatives, just as for Lee's faces. The maps use gnomonic projection:
+at angular distance theta from a face normal, the principal stretches are
+sec(theta)^2 and sec(theta), so local area scale is sec(theta)^3. Neither areas
+nor angles are preserved. Rigid unfolding and re-centering do not change these
+scores. The generated scores include all entries in projection-catalog.js.
