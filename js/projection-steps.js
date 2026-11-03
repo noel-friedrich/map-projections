@@ -40,10 +40,12 @@ export function getProjectionSteps(type) {
 
 export function createProjectionStepList(list, onJump) {
     let steps = [], buttons = [];
+    let activeIndex = -1;
     return {
         setProjection(type) {
             steps = getProjectionSteps(type);
             buttons = [];
+            activeIndex = -1;
             list.replaceChildren(...steps.map(({ progress, description }, index) => {
                 const item = document.createElement('li');
                 const number = document.createElement('button');
@@ -62,10 +64,10 @@ export function createProjectionStepList(list, onJump) {
         setProgress(progress) {
             // Match the checkpoint tolerance, including URL-rounded thirds.
             const active = steps.findLastIndex(step => step.progress <= progress + 0.005);
-            buttons.forEach((button, index) => {
-                if (index === active) button.setAttribute('aria-current', 'step');
-                else button.removeAttribute('aria-current');
-            });
+            if (active === activeIndex) return;
+            buttons[activeIndex]?.removeAttribute('aria-current');
+            buttons[active]?.setAttribute('aria-current', 'step');
+            activeIndex = active;
         },
     };
 }

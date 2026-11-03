@@ -161,14 +161,14 @@ function updateProgressTrack() {
     );
 }
 
-function updateProjection() {
+function updateProjection({ saveUrl = true } = {}) {
     const state = getProjectionState(currentProjection, currentProgress / 100);
     model.update(state);
     view.frame(state);
     slider.style.setProperty("--progress", `${currentProgress}%`);
     updateProgressTrack();
     stepList.setProgress(currentProgress / 100);
-    saveUrlState();
+    if (saveUrl) saveUrlState();
 }
 window.addEventListener("popstate", () => {
     progressAnimation = null;
@@ -177,13 +177,17 @@ window.addEventListener("popstate", () => {
     updateProjection();
 });
 slider.addEventListener("pointerdown", () => {
+    if (progressAnimation) saveUrlState();
     progressAnimation = null;
 });
 slider.addEventListener("input", () => {
     progressAnimation = null;
     currentProgress = Number(slider.value);
-    updateProjection();
+    updateProjection({ saveUrl: false });
 });
+// Keep history IPC out of animation frames and drag events. Safari limits
+// replaceState calls; commit the shared URL once the interaction has finished.
+slider.addEventListener("change", saveUrlState);
 function chooseProjection(id) {
     currentProjection = id;
     progressAnimation = null;
@@ -281,7 +285,7 @@ document.getElementById("next-stage").addEventListener("click", () => stepProjec
 updateProjection();
 
 function resize() {
-    if (view.resize()) updateProjection();
+    if (view.resize()) updateProjection({ saveUrl: false });
 }
 new ResizeObserver(resize).observe(container);
 resize();
@@ -329,7 +333,7 @@ view.renderer.setAnimationLoop((time) => {
         currentProgress = from + (to - from) * eased;
         slider.value = currentProgress;
         if (fraction === 1) progressAnimation = null;
-        updateProjection();
+        updateProjection({ saveUrl: fraction === 1 });
     }
     view.update();
     earthControls.update(deltaTime);
