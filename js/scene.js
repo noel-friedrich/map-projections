@@ -124,12 +124,21 @@ export function createScene(container) {
     controls.enableDamping = true;
   }
 
+  function zoom(deltaY) {
+    if (!controls.enabled || !controls.enableZoom) return;
+    const bounds = renderer.domElement.getBoundingClientRect();
+    // Use the same dolly, limits and update path as mouse-wheel zoom in r180.
+    controls._handleMouseWheel({ deltaY,
+      clientX: bounds.left + bounds.width / 2,
+      clientY: bounds.top + bounds.height / 2 });
+  }
+
   function update() {
     controls.update();
     keepCameraAboveFloor();
     environment.update(camera);
   }
 
-  return { scene, camera, renderer, controls, environment, frame, resize, reset, update,
+  return { scene, camera, renderer, controls, environment, frame, resize, reset, zoom, update,
     render: () => renderer.render(scene, camera) };
 }

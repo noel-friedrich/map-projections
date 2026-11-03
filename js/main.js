@@ -1,15 +1,32 @@
-import { createScene } from './scene.js';
+import { createScene } from './scene.js?v=zoom-controls-3';
 import { createModel } from './model.js';
 import { getProjectionState, getProjectionCheckpoints, getNextProjectionCheckpoint, getPreviousProjectionCheckpoint } from './projections.js';
 import { loadMapTexture } from './texture.js';
 import { createEarthControls } from './controls.js';
 import { createMapAnnotations } from './annotations.js';
+import { distortionScores } from './distortion-data.js';
 
 const container = document.getElementById('view');
 const slider = document.getElementById('progress');
 const projection = document.getElementById('projection');
 const status = document.getElementById('status');
 const propertyTags = document.getElementById('projection-properties');
+const distortionChart = document.getElementById('distortion-chart');
+const distortionToggle = document.getElementById('distortion-toggle');
+const distortionMaximums = {
+  area: Math.max(...Object.values(distortionScores).map(score => score.areaDifference)),
+  angle: Math.max(...Object.values(distortionScores).map(score => score.angleError)),
+};
+
+function setDistortionChartVisible(visible) {
+  distortionChart.hidden = !visible;
+  distortionToggle.setAttribute('aria-expanded', String(visible));
+  const label = `${visible ? 'Hide' : 'Show'} distortion chart`;
+  distortionToggle.setAttribute('aria-label', label);
+  distortionToggle.title = `${label} (C)`;
+}
+
+distortionToggle.addEventListener('click', () => setDistortionChartVisible(distortionChart.hidden));
 // Keep simulation precision independent of range-input stepping and URL formatting.
 let currentProgress = Number(slider.value);
 // Properties column: https://en.wikipedia.org/wiki/List_of_map_projections
@@ -28,13 +45,21 @@ const projectionProperties = {
 };
 loadUrlState();
 const view = createScene(container);
+document.getElementById('zoom-in').addEventListener('click', () => view.zoom(-300));
+document.getElementById('zoom-out').addEventListener('click', () => view.zoom(300));
 const model = createModel();
 view.scene.add(model.mesh, model.guide);
 const earthControls = createEarthControls(view.renderer.domElement, view.camera,
   view.controls, model.rotate);
 let progressAnimation = null;
 
+function setGuessingMode(enabled) {
+  projection.hidden = enabled;
+  propertyTags.hidden = enabled;
+}
+
 function updateProjectionProperties() {
+  updateDistortionChart();
   propertyTags.replaceChildren(...projectionProperties[projection.value].map(label => {
     const tag = document.createElement('a');
     tag.className = 'projection-tag';
@@ -48,6 +73,29 @@ function updateProjectionProperties() {
       : 'Property of the completed projection. Source: Wikipedia.';
     return tag;
   }));
+}
+
+function updateDistortionChart() {
+  const { areaDifference, angleError } = distortionScores[projection.value];
+  for (const [id, value, maximum, unit] of [
+    ['area', areaDifference, distortionMaximums.area, '%'],
+    ['angle', angleError, distortionMaximums.angle, '°'],
+  ]) {
+    document.getElementById(`${id}-distortion-value`).textContent = `${value.toFixed(1)}${unit}`;
+    document.getElementById(`${id}-distortion-fill`).style.height = `${maximum > 0 ? value / maximum * 100 : 0}%`;
+    const roughStep = maximum > 0 ? maximum / 5 : 1;
+    const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+    const step = [1, 2, 5, 10].find(value => value * magnitude >= roughStep) * magnitude;
+    const decimals = Math.max(0, -Math.floor(Math.log10(step)));
+    const tickValues = Array.from({ length: Math.floor(maximum / step) + 1 }, (_, index) => index * step);
+    document.getElementById(`${id}-distortion-ticks`).replaceChildren(...tickValues.map(value => {
+      const tick = document.createElement('span');
+      tick.className = 'distortion-tick';
+      tick.style.bottom = `${maximum > 0 ? value / maximum * 100 : 0}%`;
+      tick.textContent = value.toFixed(decimals);
+      return tick;
+    }));
+  }
 }
 
 function loadUrlState() {
@@ -95,6 +143,7 @@ function updateProjection() {
 }
 window.addEventListener('popstate', () => {
   progressAnimation = null;
+  setGuessingMode(false);
   loadUrlState();
   updateProjection();
 });
@@ -110,9 +159,34 @@ projection.addEventListener('change', () => {
   updateProjection();
 });
 window.addEventListener('keydown', event => {
-  if (!['KeyN', 'KeyB'].includes(event.code) || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+  // The tenth projection uses 0, matching its position after 1–9 on the keyboard.
+  const numberKey = /^(?:Digit|Numpad)([0-9])$/.exec(event.code);
+  if (event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && numberKey) {
+    if (event.repeat || event.target.closest('textarea, [contenteditable], input:not([type="range"])')) return;
+    event.preventDefault();
+    setDistortionChartVisible(false);
+    progressAnimation = null;
+    earthControls.reset();
+    model.resetRotation();
+    view.reset();
+    projection.selectedIndex = (Number(numberKey[1]) || 10) - 1;
+    setGuessingMode(true);
+    updateProjectionProperties();
+    currentProgress = 100;
+    slider.value = currentProgress;
+    updateProjection();
+    lastFrameTime = performance.now();
+    // Do not leave keyboard focus on a control that has just been hidden.
+    view.renderer.domElement.focus({ preventScroll: true });
+    return;
+  }
+  if (!['KeyN', 'KeyB', 'KeyC'].includes(event.code) || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.target.closest('select, textarea, [contenteditable], input:not([type="range"])')) return;
   event.preventDefault();
+  if (event.code === 'KeyC') {
+    setDistortionChartVisible(distortionChart.hidden);
+    return;
+  }
   const from = currentProgress;
   const checkpoint = event.code === 'KeyB' ? getPreviousProjectionCheckpoint : getNextProjectionCheckpoint;
   const to = checkpoint(projection.value, (progressAnimation?.to ?? from) / 100) * 100;
@@ -136,6 +210,7 @@ resize();
 let lastFrameTime = performance.now();
 document.getElementById('reset').addEventListener('click', () => {
   progressAnimation = null;
+  setGuessingMode(false);
   earthControls.reset();
   model.resetRotation();
   currentProgress = 0;
