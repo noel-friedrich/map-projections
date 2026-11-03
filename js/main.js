@@ -44,7 +44,7 @@ const distortionMaximums = {
 // Keep simulation precision independent of range-input stepping and URL formatting.
 let currentProgress = Number(slider.value);
 loadUrlState();
-setInfoVisible(window.matchMedia('(min-width: 760px)').matches);
+setInfoVisible(window.matchMedia('(min-aspect-ratio: 1/1)').matches);
 const view = createScene(container);
 document
     .getElementById("zoom-in")
@@ -77,7 +77,7 @@ function updateProjectionInfo() {
 
 function animateToStep(progress) {
     animateProgressTo(progress * 100);
-    if (window.matchMedia('(max-width: 759px)').matches) setInfoVisible(false);
+    if (window.matchMedia('(aspect-ratio < 1/1)').matches) setInfoVisible(false);
 }
 
 function updateDistortionChart() {
