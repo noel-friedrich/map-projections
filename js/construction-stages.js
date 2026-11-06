@@ -1,4 +1,5 @@
 export const constructionStages = {
+    torus: ['Globe', 'Poles pinched together', 'Torus', 'Horizontal cylinder', 'Rectangle'],
     'lambert-conic': ['Northern hemisphere', 'Cone', 'Opened cone', 'Flat sector', 'Lambert spacing'],
     albers: ['Northern hemisphere', 'Cone', 'Opened cone', 'Flat sector', 'Albers spacing'],
     'winkel-tripel': ['Globe', 'Longitudes halved', 'Azimuthal equidistant', 'Aitoff', 'Winkel Tripel'],

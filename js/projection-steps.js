@@ -20,6 +20,7 @@ const descriptions = {
     'equal-earth': [globe, 'Set latitude spacing and ring widths for equal areas.', 'Unroll the rings into the Equal Earth map.'],
     goode: [globe, 'Space latitude lines evenly from south to north.', 'Flatten the globe into a sinusoidal map.', 'Round the polar regions while keeping equal areas.', 'Separate the lobes to reduce shape distortion.'],
     equirectangular: [globe, 'Project onto a cylinder with evenly spaced latitudes.', unrollCylinder],
+    torus: [globe, 'Pinch the north and south poles together into a point.', 'Enlarge the hole to form a torus.', 'Cut the torus open and straighten it into a horizontal cylinder.', 'Cut the cylinder at the back and unroll it upward and downward into a rectangle.'],
     tetrahedral: [globe, 'Map the globe onto a tetrahedron, preserving local angles.', 'Unfold the faces into a flat triangular net.'],
     'lambert-azimuthal': [globe, 'Open the globe into a hemispherical bowl.', 'Flatten the bowl into an equal-area disk.'],
     tetrahedron: solid('four triangular'),

@@ -1,5 +1,9 @@
 // Short summaries; each entry links to its Wikipedia source.
 export const projectionInfo = {
+  "torus": {
+    "article": "Equirectangular_projection",
+    "text": "Pinches the poles together, opens a torus, then cuts and unrolls it into a rectangle. The smaller hole produces a narrower equirectangular map, with evenly spaced longitude and latitude."
+  },
   "mercator": {
     "article": "Mercator_projection",
     "text": "A cylindrical map designed for navigation. Constant compass bearings form straight lines, while regions near the poles appear larger."

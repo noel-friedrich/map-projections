@@ -2,6 +2,7 @@ import { latitudeProfile, goodeLobeCenter } from "./pseudocylindrical.js";
 import { CONIC_TYPES, createConicState, projectConic } from './conic.js';
 import { projectWinkel } from './winkel.js';
 import { constructionStages } from './construction-stages.js';
+import { createTorusState, projectTorus } from './torus.js';
 import { PLATONIC_SOLIDS, createPolyhedralCoordinate, createPolyhedralAnimation, animatePolyhedral } from './platonic.js';
 import {
     createTetrahedralCoordinate,
@@ -49,6 +50,11 @@ export function getPreviousProjectionCheckpoint(type, progress) {
 }
 
 export function getProjectionState(type, progress) {
+    if (type === 'torus') {
+        const state = createTorusState(progress);
+        state.frameExtent = constructionExtent(state);
+        return state;
+    }
     if (CONIC_TYPES.includes(type) || type === 'winkel-tripel') {
         const state = type === 'winkel-tripel'
             ? { type, progress, winkel: true, latitudeRange: Math.PI / 2 }
@@ -168,6 +174,7 @@ function longitudeProfile(longitude, state) {
 
 // Write into a reusable position object to avoid allocations for every vertex.
 export function projectPoint(longitude, latitude, state, position, lobeCenter) {
+    if (state.toroidal) return projectTorus(longitude, latitude, state, position);
     if (state.conic) return projectConic(longitude, latitude, state, position);
     if (state.winkel) return projectWinkel(longitude, latitude, state.progress, position);
     if (state.polyhedral) {

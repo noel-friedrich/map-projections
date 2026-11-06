@@ -72,5 +72,9 @@ export const distortionScores = {
   "winkel-tripel": {
     "areaDifference": 18.10474,
     "angleError": 23.268827
+  },
+  "torus": {
+    "areaDifference": 42.043079,
+    "angleError": 16.013477
   }
 };

@@ -70,5 +70,9 @@ export const projectionCatalog = [
   {
     "id": "winkel-tripel",
     "title": "Winkel Tripel"
+  },
+  {
+    "id": "torus",
+    "title": "Torus unfolding"
   }
 ];

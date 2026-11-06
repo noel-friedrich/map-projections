@@ -360,7 +360,7 @@ export function createModel() {
         // Culling is disabled; recompute raycast bounds lazily only when clicked.
         geometry.boundingSphere = null;
         const cylindrical =
-            !state.pseudo && !state.tetrahedral && !state.azimuthal && !state.polyhedral && !state.conic && !state.winkel;
+            !state.pseudo && !state.tetrahedral && !state.azimuthal && !state.polyhedral && !state.conic && !state.winkel && !state.toroidal;
         cylinderGuide.visible = cylindrical && state.project < 1;
         tetrahedronGuide.visible =
             Boolean(state.tetrahedral) && state.progress < 0.5;

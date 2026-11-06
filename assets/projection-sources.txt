@@ -104,3 +104,24 @@ azimuthal equidistant disk → horizontally doubled Aitoff ellipse →
 Winkel Tripel, moving directly halfway toward equirectangular coordinates.
 The last three stages are planar; there is no separate rectangle stop.
 The final blend is exactly 50/50.
+
+Torus unfolding (illustrative construction, ending in an equirectangular map):
+Douglas DeCarlo and Jean Gallier, Topological Evolution of Surfaces (1996),
+Figure 2: push two sphere points together, then expand the pinch into a ring.
+https://graphicsinterface.org/wp-content/uploads/gi1996-23.pdf
+https://proj.org/en/stable/operations/projections/eqc.html
+
+Checkpoints: sphere, poles meeting at the origin (horn torus), ring torus,
+horizontal cylinder, rectangle. Sphere-to-horn interpolation keeps the equator
+fixed and uses radius cos(latitude)^2 and height sin(latitude)*cos(latitude).
+The torus has major radius 3/4 and tube radius 1/2; its tube angle is twice latitude.
+The hole opens to radius 1/4, half its original 1/2 radius. Straightening preserves
+the smaller major circumference, producing a correspondingly narrower rectangle.
+The polar singularity intentionally changes topology. No polar area is cropped.
+Opening the hole preserves the torus's orientation. Straightening cuts the
+longitude seam and bends only the major ring, without twisting the tube.
+Unrolling opens the polar seam at the back symmetrically upward and downward,
+keeping the front equator fixed, with no rolling. The final coordinates are
+x=(3/4)*longitude, y=latitude, z=1. This is equirectangular spacing with a 3:2
+rectangle instead of Plate Carree's 2:1 rectangle. Distortion is measured from
+these final coordinates.
