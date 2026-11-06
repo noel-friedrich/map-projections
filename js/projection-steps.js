@@ -12,12 +12,15 @@ const conic = property => [
     `Adjust latitude spacing to preserve ${property}.`,
 ];
 const descriptions = {
+    aitoff: [globe, 'Halve longitudes to fit the world onto a hemisphere.', 'Flatten into an equidistant disk: radius follows angular distance on the compressed hemisphere.', 'Double the disk width to form the Aitoff ellipse.'],
+    hammer: [globe, 'Halve longitudes to fit the world onto a hemisphere.', 'Flatten into a Lambert equal-area disk, spacing points to preserve relative areas.', 'Double the disk width to form the equal-area Hammer ellipse.'],
+    mollweide: [globe, 'Adjust latitude heights and ring widths for Mollweide equal-area spacing.', 'Move each closed latitude ring forward until its prime-meridian point touches the final map plane.', 'Cut each ring at the back and unroll it from its contact point into a horizontal line.'],
     mercator: [globe, cylinder, unrollCylinder, 'Stretch latitude spacing to preserve local angles.'],
     'same-height': [globe, 'Project onto a cylinder while keeping each point’s height.', unrollCylinder],
     classic: [globe, 'Project outward from the globe’s center onto a cylinder.', unrollCylinder],
     sinusoidal: [globe, 'Space latitude lines evenly from south to north.', 'Unroll the latitude rings into a flat map.'],
-    robinson: [globe, 'Reshape latitude rings to balance sizes and shapes.', 'Unroll the rings into the Robinson map.'],
-    'equal-earth': [globe, 'Set latitude spacing and ring widths for equal areas.', 'Unroll the rings into the Equal Earth map.'],
+    robinson: [globe, 'Reshape latitude rings to balance sizes and shapes.', 'Move each closed latitude ring forward until its prime-meridian point touches the final map plane.', 'Cut each ring at the back and unroll it from its contact point into a horizontal line.'],
+    'equal-earth': [globe, 'Set latitude spacing and ring widths for equal areas.', 'Move each closed latitude ring forward until its prime-meridian point touches the final map plane.', 'Cut each ring at the back and unroll it from its contact point into a horizontal line.'],
     goode: [globe, 'Space latitude lines evenly from south to north.', 'Flatten the globe into a sinusoidal map.', 'Round the polar regions while keeping equal areas.', 'Separate the lobes to reduce shape distortion.'],
     equirectangular: [globe, 'Project onto a cylinder with evenly spaced latitudes.', unrollCylinder],
     torus: [globe, 'Pinch the north and south poles together into a point.', 'Enlarge the hole to form a torus.', 'Cut the torus open and straighten it into a horizontal cylinder.', 'Cut the cylinder at the back and unroll it upward and downward into a rectangle.'],

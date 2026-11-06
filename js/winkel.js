@@ -9,7 +9,26 @@ export function aitoff(longitude, latitude) {
         y: Math.sin(latitude) * inverseSinc };
 }
 
+function hammer(longitude, latitude) {
+    const scale = Math.sqrt(2 / (1 + Math.cos(latitude) * Math.cos(longitude / 2)));
+    return { x: 2 * scale * Math.cos(latitude) * Math.sin(longitude / 2),
+        y: scale * Math.sin(latitude) };
+}
+
+// Share the hemisphere, disk and horizontal expansion with Winkel Tripel.
+export function projectAitoff(longitude, latitude, progress, position) {
+    return projectEllipse(longitude, latitude, progress * 0.75, position);
+}
+
+export function projectHammer(longitude, latitude, progress, position) {
+    return projectEllipse(longitude, latitude, progress * 0.75, position, true);
+}
+
 export function projectWinkel(longitude, latitude, progress, position) {
+    return projectEllipse(longitude, latitude, progress, position);
+}
+
+function projectEllipse(longitude, latitude, progress, position, equalArea = false) {
     const cosLatitude = Math.cos(latitude), sinLatitude = Math.sin(latitude);
     if (progress <= 0.25) {
         const compressed = longitude * lerp(1, 0.5, clamp(progress * 4));
@@ -18,7 +37,7 @@ export function projectWinkel(longitude, latitude, progress, position) {
         position.z = cosLatitude * Math.cos(compressed);
         return position;
     }
-    const ellipse = aitoff(longitude, latitude);
+    const ellipse = equalArea ? hammer(longitude, latitude) : aitoff(longitude, latitude);
     if (progress <= 0.5) {
         const flatten = clamp((progress - 0.25) * 4);
         position.x = lerp(cosLatitude * Math.sin(longitude / 2), ellipse.x / 2, flatten);

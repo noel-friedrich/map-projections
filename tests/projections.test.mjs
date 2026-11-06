@@ -212,13 +212,13 @@ test("N checkpoints match the added stage structures and tolerate rounded thirds
     for (const type of types) {
         assert.deepEqual(
             getProjectionCheckpoints(type),
-            type === "goode" ? [0, 0.25, 0.5, 0.75, 1] : [0, 0.5, 1],
+            type === "goode" ? [0, 0.25, 0.5, 0.75, 1] : type === 'sinusoidal' ? [0, 0.5, 1] : [0, 1/3, 2/3, 1],
         );
         close(getNextProjectionCheckpoint(type, 1), 0);
     }
     close(getNextProjectionCheckpoint("mercator", 0.333), 2 / 3);
     close(getNextProjectionCheckpoint("goode", 0.25), 0.5);
-    close(getNextProjectionCheckpoint("robinson", 0.25), 0.5);
+    close(getNextProjectionCheckpoint("robinson", 0.25), 1/3);
 });
 
 test("backward checkpoints reverse every stage sequence, wrap, and tolerate rounded values", () => {

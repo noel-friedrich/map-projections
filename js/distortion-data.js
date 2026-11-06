@@ -76,5 +76,17 @@ export const distortionScores = {
   "torus": {
     "areaDifference": 42.043079,
     "angleError": 16.013477
+  },
+  "aitoff": {
+    "areaDifference": 11.201919,
+    "angleError": 30.166881
+  },
+  "hammer": {
+    "areaDifference": 0,
+    "angleError": 35.651058
+  },
+  "mollweide": {
+    "areaDifference": 0,
+    "angleError": 32.267748
   }
 };

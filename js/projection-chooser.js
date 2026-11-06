@@ -1,11 +1,26 @@
 import { projectionCatalog } from './projection-catalog.js';
 
+const shapeGroups = [
+    // Rectangles.
+    ['mercator', 'same-height', 'classic', 'equirectangular', 'torus'],
+    // Curved and interrupted outlines.
+    ['sinusoidal', 'robinson', 'equal-earth', 'goode', 'winkel-tripel'],
+    // Ellipses, circles, conics, then polyhedral nets.
+    ['aitoff', 'hammer', 'mollweide'],
+    ['lambert-azimuthal'],
+    ['lambert-conic', 'albers'],
+    ['tetrahedral', 'tetrahedron', 'cube', 'octahedron', 'dodecahedron', 'icosahedron'],
+];
+const shapeOrder = new Map(shapeGroups.flat().map((id, index) => [id, index]));
+const chooserCatalog = projectionCatalog.toSorted((a, b) =>
+    (shapeOrder.get(a.id) ?? Infinity) - (shapeOrder.get(b.id) ?? Infinity));
+
 export function createProjectionChooser(onChoose) {
     const dialog = document.getElementById('projection-dialog');
     const trigger = document.getElementById('choose-projection');
     const grid = document.getElementById('projection-grid');
     let selected = projectionCatalog[0].id;
-    const cards = projectionCatalog.map(({ id, title }) => {
+    const cards = chooserCatalog.map(({ id, title }) => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'projection-card';

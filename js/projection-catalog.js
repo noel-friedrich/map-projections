@@ -74,5 +74,17 @@ export const projectionCatalog = [
   {
     "id": "torus",
     "title": "Torus unfolding"
+  },
+  {
+    "id": "aitoff",
+    "title": "Aitoff"
+  },
+  {
+    "id": "hammer",
+    "title": "Hammer"
+  },
+  {
+    "id": "mollweide",
+    "title": "Mollweide"
   }
 ];

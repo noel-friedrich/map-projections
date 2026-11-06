@@ -81,7 +81,7 @@ export function latitudeProfile(type, latitude) {
                 (1.340264 - 0.081106 * t2 + t6 * (0.000893 + 0.003796 * t2)),
         };
     }
-    if (type === "goode" && Math.abs(latitude) > GOODE_TRANSITION) {
+    if (type === "mollweide" || (type === "goode" && Math.abs(latitude) > GOODE_TRANSITION)) {
         let theta = latitude;
         if (Math.abs(latitude) >= HALF_PI - 1e-12)
             theta = Math.sign(latitude) * HALF_PI;
@@ -100,7 +100,7 @@ export function latitudeProfile(type, latitude) {
             radius: ((2 * Math.SQRT2) / Math.PI) * Math.cos(theta),
             height:
                 Math.SQRT2 * Math.sin(theta) -
-                Math.sign(latitude) * GOODE_Y_OFFSET,
+                (type === 'goode' ? Math.sign(latitude) * GOODE_Y_OFFSET : 0),
         };
     }
     return { radius: Math.cos(latitude), height: latitude };

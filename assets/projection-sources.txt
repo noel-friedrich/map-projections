@@ -1,14 +1,41 @@
 Projection equations and reference data
 
+Aitoff: reuses Winkel Tripel's first three construction stages, rescaled to
+thirds: globe, halved-longitude hemisphere, azimuthal equidistant disk, ellipse.
+https://proj.org/en/stable/operations/projections/aitoff.html
+
+Hammer: same longitude compression and horizontal doubling as Aitoff, using
+Lambert azimuthal equal-area instead of azimuthal equidistant disk coordinates.
+For d=sqrt(2/(1+cos(latitude)*cos(longitude/2))), final x=2*d*cos(latitude)*
+sin(longitude/2), y=d*sin(latitude). No additional rotations are introduced.
+https://proj.org/en/stable/operations/projections/hammer.html
+https://github.com/d3/d3-geo-projection/blob/main/src/hammer.js
+
+Mollweide: solve 2*theta+sin(2*theta)=pi*sin(latitude), then use
+x=(2*sqrt(2)/pi)*longitude*cos(theta), y=sqrt(2)*sin(theta).
+Reuses the Mollweide latitude solver in Goode, without its polar y offset.
+Stages: globe, latitude rings with final widths/heights, closed rings tangent
+to the final plane, unrolled ellipse. Checkpoints at 0, 1/3, 2/3, 1. The third
+stage translates each closed ring forward by 1-radius, placing all prime-meridian
+points at z=1 without changing ring radii or latitude heights. Only the final
+stage cuts the rings behind and decreases their curvature to zero, keeping the
+prime-meridian contact points fixed. No ring highlighting or rotation is added.
+https://proj.org/en/stable/operations/projections/moll.html
+
 Sinusoidal:
 https://proj.org/en/stable/operations/projections/sinu.html
 
 Robinson: published 5-degree width and height table, quadratic interpolation,
 and conventional unit-sphere scale factors 0.8487 and 1.3523.
+Uses the same four-stage ring construction as Mollweide: reshape, translate
+closed rings to contact the final plane at the prime meridian, then unroll from
+those fixed contact points. Checkpoints are 0, 1/3, 2/3, 1.
 https://proj.org/en/stable/operations/projections/robin.html
 https://github.com/d3/d3-geo-projection/blob/main/src/robinson.js
 
 Equal Earth: Savric, Patterson and Jenny (2018), standard polynomial equations.
+Uses the same four-stage ring construction as Mollweide and Robinson, with
+its own final latitude heights and ring widths. No ring highlighting is added.
 https://proj.org/en/stable/operations/projections/eqearth.html
 https://github.com/d3/d3-geo/blob/main/src/projection/equalEarth.js
 

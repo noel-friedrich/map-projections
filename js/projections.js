@@ -1,6 +1,6 @@
 import { latitudeProfile, goodeLobeCenter } from "./pseudocylindrical.js";
 import { CONIC_TYPES, createConicState, projectConic } from './conic.js';
-import { projectWinkel } from './winkel.js';
+import { projectWinkel, projectAitoff, projectHammer } from './winkel.js';
 import { constructionStages } from './construction-stages.js';
 import { createTorusState, projectTorus } from './torus.js';
 import { PLATONIC_SOLIDS, createPolyhedralCoordinate, createPolyhedralAnimation, animatePolyhedral } from './platonic.js';
@@ -55,9 +55,9 @@ export function getProjectionState(type, progress) {
         state.frameExtent = constructionExtent(state);
         return state;
     }
-    if (CONIC_TYPES.includes(type) || type === 'winkel-tripel') {
-        const state = type === 'winkel-tripel'
-            ? { type, progress, winkel: true, latitudeRange: Math.PI / 2 }
+    if (CONIC_TYPES.includes(type) || ['winkel-tripel', 'aitoff', 'hammer'].includes(type)) {
+        const state = !CONIC_TYPES.includes(type)
+            ? { type, progress, winkel: type === 'winkel-tripel', ellipse: true, latitudeRange: Math.PI / 2 }
             : createConicState(type, progress);
         state.frameExtent = constructionExtent(state);
         return state;
@@ -83,16 +83,19 @@ export function getProjectionState(type, progress) {
             "equal-earth",
             "goode",
             "equirectangular",
+            "mollweide",
         ].includes(type)
     ) {
         const opening = type === "goode" ? clamp01(progress * 2) : progress;
-        const reshape = clamp01(opening * 2);
-        const unroll = clamp01(opening * 2 - 1);
+        const alignRings = ['mollweide', 'robinson', 'equal-earth'].includes(type);
+        const reshape = alignRings ? clamp01(progress * 3) : clamp01(opening * 2);
+        const unroll = alignRings ? clamp01(progress * 3 - 2) : clamp01(opening * 2 - 1);
         return {
             type,
             progress,
             pseudo: true,
             reshape,
+            align: alignRings ? clamp01(progress * 3 - 1) : undefined,
             unroll,
             curvature: 1 - unroll,
             homolosine: type === "goode" ? clamp01(progress * 4 - 2) : 0,
@@ -176,7 +179,10 @@ function longitudeProfile(longitude, state) {
 export function projectPoint(longitude, latitude, state, position, lobeCenter) {
     if (state.toroidal) return projectTorus(longitude, latitude, state, position);
     if (state.conic) return projectConic(longitude, latitude, state, position);
-    if (state.winkel) return projectWinkel(longitude, latitude, state.progress, position);
+    if (state.ellipse) {
+        const project = state.type === 'aitoff' ? projectAitoff : state.type === 'hammer' ? projectHammer : projectWinkel;
+        return project(longitude, latitude, state.progress, position);
+    }
     if (state.polyhedral) {
         const direction = [Math.cos(latitude) * Math.sin(longitude), Math.sin(latitude), Math.cos(latitude) * Math.cos(longitude)];
         return animatePolyhedral(createPolyhedralCoordinate(state.type, direction), state.progress, position, state.animation);
@@ -254,7 +260,7 @@ export function projectPoint(longitude, latitude, state, position, lobeCenter) {
             const column = longitudeProfile(longitude, state);
             position.x = profile.radius * column.x;
             position.z =
-                lerp(profile.radius, 1, state.unroll) +
+                lerp(profile.radius, 1, state.align ?? state.unroll) +
                 profile.radius * column.bend;
         }
         return position;

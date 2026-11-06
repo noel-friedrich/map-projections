@@ -1,5 +1,17 @@
 // Short summaries; each entry links to its Wikipedia source.
 export const projectionInfo = {
+  "aitoff": {
+    "article": "Aitoff_projection",
+    "text": "Uses an azimuthal equidistant disk: radius follows angular distance from the center of the longitude-compressed hemisphere. Doubling its width forms the ellipse. Unlike Hammer, Aitoff does not preserve relative areas. It is also used in Winkel Tripel."
+  },
+  "hammer": {
+    "article": "Hammer_projection",
+    "text": "Uses a Lambert azimuthal equal-area disk, with different radial spacing from Aitoff's equidistant disk. Both halve longitudes and double the disk width, but Hammer preserves relative areas: equally sized regions on Earth occupy equally sized areas on the map."
+  },
+  "mollweide": {
+    "article": "Mollweide_projection",
+    "text": "An equal-area elliptical map with straight, horizontal parallels and curved meridians. Latitude spacing and parallel widths keep relative areas correct. Its polar regions are also used in Goode homolosine."
+  },
   "torus": {
     "article": "Equirectangular_projection",
     "text": "Pinches the poles together, opens a torus, then cuts and unrolls it into a rectangle. The smaller hole produces a narrower equirectangular map, with evenly spaced longitude and latitude."
@@ -74,6 +86,6 @@ export const projectionInfo = {
   },
   "winkel-tripel": {
     "article": "Winkel_tripel_projection",
-    "text": "Used for National Geographic world maps. Combines Aitoff and equirectangular coordinates to balance area and shape distortion."
+    "text": "Used for National Geographic world maps. First constructs the Aitoff projection, then blends its coordinates equally with an equirectangular map to balance area and shape distortion."
   }
 };
