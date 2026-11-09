@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { createGridMaterial } from "./grid.js";
+import { STEREOGRAPHIC_RADIUS } from './stereographic.js';
 
 export function createEnvironment(scene) {
     const floorY = -6;
@@ -116,15 +117,15 @@ export function createScene(container) {
             const spread = 1 - (1 - state.reshape * 0.35) * (1 - state.unroll);
             cameraScale = THREE.MathUtils.lerp(1, fitScale, spread);
         }
-        if (state.tetrahedral || state.azimuthal) {
+        if (state.tetrahedral || state.azimuthal || state.stereographic) {
             const unfold = Math.max(0, state.progress * 2 - 1);
             // Frame the whole stationary tetrahedron from the start, including its guide.
-            const halfWidth = state.tetrahedral
+            const halfWidth = state.stereographic ? STEREOGRAPHIC_RADIUS : state.tetrahedral
                 ? Math.sqrt(6) * (1 + unfold)
-                : 2;
-            const halfHeight = state.tetrahedral
+                : state.equidistant ? Math.PI : 2;
+            const halfHeight = state.stereographic ? STEREOGRAPHIC_RADIUS : state.tetrahedral
                 ? Math.sqrt(8) + Math.SQRT2 * unfold
-                : 2;
+                : state.equidistant ? Math.PI : 2;
             const fitDistance =
                 1 +
                 (1.15 * Math.max(halfWidth / camera.aspect, halfHeight)) /
@@ -133,7 +134,7 @@ export function createScene(container) {
                 1,
                 fitDistance / (sphereDistance * Math.max(1, 1 / camera.aspect)),
             );
-            cameraScale = state.azimuthal
+            cameraScale = state.azimuthal || state.stereographic
                 ? THREE.MathUtils.lerp(1, fitScale, state.progress)
                 : fitScale;
         }

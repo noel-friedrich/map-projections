@@ -1,5 +1,18 @@
 // Short summaries; each entry links to its Wikipedia source.
 export const projectionInfo = {
+  authagraph: {article:'AuthaGraph_projection',text:'A rectangular tetrahedral world map, implemented from Hajime Narukawa’s 2022 mathematical formulation. Transfers spherical regions to a tetrahedron, unfolds its faces and rearranges the strip into a rectangle. Balances area and shape distortion.'},
+  dymaxion: {article:'Dymaxion_map',text:'Buckminster Fuller’s world map uses an icosahedron and the AirOcean arrangement, with additional cuts in selected faces. The spherical-triangle mapping reduces distortion while keeping most land connected.'},
+  peirce: {article:'Peirce_quincuncial_projection',text:'A conformal square world map, except at four singular points on the equator. The north pole lies at the center and the south pole appears at all four corners. Opposite edges join so the map can tile continuously.'},
+  'gall-peters': {article:'Gall–Peters_projection',text:'A cylindrical equal-area map with true scale along 45° north and south. It narrows and vertically stretches the Lambert equal-area rectangle while preserving relative areas. Shapes stretch near the equator and compress near the poles.'},
+  orthographic: {article:'Orthographic_map_projection',text:'Splits the globe into two hemispheres, hinges them open, and projects each along parallel rays. Both circular maps face forward, showing the whole Earth. Shapes and areas compress toward each rim.'},
+  'azimuthal-equidistant': {article:'Azimuthal_equidistant_projection',text:'Distances from the map center match distances along the globe, and directions from the center are correct. The opposite point opens into the disk rim. Other distances and relative areas are distorted.'},
+  werner: {article:'Werner_projection',text:'A heart-shaped equal-area map. Latitude parallels become concentric circular arcs around the north pole while keeping their lengths. This is the polar form of the Bonne projection.'},
+  collignon: {article:'Collignon_projection',text:'An equal-area triangular map with straight horizontal parallels. The north pole becomes the tip, while the south pole stretches across the base. Latitude spacing compensates for the changing width.'},
+  gores: {article:'Gore_(segment)',text:'Twelve sinusoidal strips show the whole world with equal relative areas. These narrow pole-to-pole pieces resemble the paper gores used to construct globes. Here they peel apart and flatten side by side.'},
+  "stereographic": {
+    "article": "Stereographic_map_projection",
+    "text": "Projects from the back point of the globe onto a plane touching its front, preserving local angles. Cropped at 120 degrees from the front center to form a circular map. The rear cap is removed from the globe at every stage, including the start."
+  },
   "aitoff": {
     "article": "Aitoff_projection",
     "text": "Uses an azimuthal equidistant disk: radius follows angular distance from the center of the longitude-compressed hemisphere. Doubling its width forms the ellipse. Unlike Hammer, Aitoff does not preserve relative areas. It is also used in Winkel Tripel."

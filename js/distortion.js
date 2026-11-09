@@ -1,5 +1,8 @@
 import { getProjectionState, projectPoint } from "./projections.js";
 import { goodeLobeCenter } from "./pseudocylindrical.js";
+import { STEREOGRAPHIC_LIMIT } from './stereographic.js';
+import { goreCenter } from './simple-projections.js';
+import {advancedCoordinate} from './advanced-projections.js';
 import { createPolyhedralCoordinate, animatePolyhedral } from './platonic.js';
 import {
     createTetrahedralCoordinate,
@@ -64,8 +67,8 @@ export function measureProjectionDistortion(type, sampleCount = 524288) {
             y,
             radius * Math.cos(longitude),
         ];
-        const lobe =
-            type === "goode"
+        if (state.stereographic && direction[2] < Math.cos(STEREOGRAPHIC_LIMIT)) continue;
+        const lobe = state.advanced ? advancedCoordinate(type,direction).patchId : state.orthographic ? (direction[2]>=0?1:-1) : state.gores ? goreCenter(longitude) : type === "goode"
                 ? goodeLobeCenter(longitude, Math.asin(y))
                 : undefined;
         const face = state.polyhedral ? createPolyhedralCoordinate(type, direction).face.id : state.tetrahedral
@@ -104,16 +107,18 @@ export function measureProjectionDistortion(type, sampleCount = 524288) {
         // Projection caches are useful to the renderer, but not to unique samples.
         state.profiles?.clear();
         state.columns?.clear();
+        state.base?.profiles?.clear();
+        state.base?.columns?.clear();
     }
-    const meanArea = areas.reduce((sum, value) => sum + value, 0) / sampleCount;
+    const meanArea = areas.reduce((sum, value) => sum + value, 0) / areas.length;
     const areaDifference =
         (100 *
             areas.reduce(
                 (sum, value) => sum + Math.abs(value / meanArea - 1),
                 0,
             )) /
-        sampleCount;
-    const angleError = angleSum / sampleCount;
+        areas.length;
+    const angleError = angleSum / areas.length;
     // Suppress finite-difference roundoff, without assigning zeros by projection name.
     const clean = (value) => (value < 1e-4 ? 0 : Number(value.toFixed(6)));
     return {

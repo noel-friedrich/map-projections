@@ -47,6 +47,10 @@ const ROBINSON = [
 ];
 
 export function latitudeProfile(type, latitude) {
+    if(type==='collignon') {
+        const alpha=Math.sqrt(Math.max(0,1-Math.sin(latitude)));
+        return {radius:2/Math.sqrt(Math.PI)*alpha,height:Math.sqrt(Math.PI)*(1-alpha)};
+    }
     if (type === "equirectangular") return { radius: 1, height: latitude };
     if (type === "robinson") {
         const row = Math.min(18, (Math.abs(latitude) * 36) / Math.PI);

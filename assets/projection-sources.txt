@@ -1,5 +1,96 @@
 Projection equations and reference data
 
+AuthaGraph: Narukawa, H. (2022), "Formulation of AuthaGraph Map Projection
+and an Evaluation of its Distortion", Map 60(1), 1-16, DOI 10.11212/jjca.60.1_1.
+Uses the author's published formulation (which modifies the earlier auxiliary
+curved surface), not the third-party Imago power-law approximation.
+https://doi.org/10.11212/jjca.60.1_1
+Equations 2.22 and 2.23 are evaluated on 24 vertex-edge-center domains.
+With local longitude lambda and latitude phi, c=(2+cos(lambda))*cos(phi)/
+(sqrt(2)*cos(phi)+sin(phi)), x=2*c*(lambda-asin(sin(lambda)/sqrt(3)))/pi,
+y=(sqrt(2)-c)/sqrt(3). These are local coordinates on the tetrahedral faces.
+The animated transfer interpolates to these mapped coordinates; its curved
+intermediate is illustrative, not a reconstruction of the original 96-panel
+auxiliary surface. Faces unfold rigidly into a strip; a cut portion then
+moves across to fill the rectangle. The displayed
+aspect uses the documented vertex near 76d53'N,149d27'E. Final rectangle aspect
+ratio is 4/sqrt(3). Distortion is measured on the implemented formulation.
+
+Dymaxion: Fuller spherical-triangle transformation using Robert W. Gray's
+equations and the AirOcean layout, including the split faces. Bundled D3 math
+provides the local Fuller projections, original face vertices and adjacency.
+The model transfers them to tangent 3D faces and unfolds the same net rigidly.
+https://github.com/d3/d3-geo-polygon/blob/main/src/airocean.js
+https://github.com/d3/d3-geo-polygon/blob/main/src/grayfuller.js
+Gray (1995), "Exact Transformation Equations For Fuller's World Map",
+Cartographica 32(3),17-25. The Gray implementation is public domain.
+
+Peirce quincuncial: D3's Guyou elliptic-function mapping in quincuncial form.
+The inverse mesh is split into eight triangular patches: four for the northern
+hemisphere diamond and one for each southern corner. The globe starts north
+facing the viewer. First its hemispheres hinge open rigidly about the equatorial
+tangent, then flatten into two separate conformal diamond-shaped squares.
+Finally, the southern square's four right triangles translate and quarter-turn
+to surround the northern square. They lift slightly during rearrangement to
+avoid coplanar overlaps with the stationary sheet. The north pole finishes at
+the center and the four separated south-pole vertices finish at the corners.
+https://github.com/d3/d3-geo-projection/blob/main/src/guyou.js
+https://github.com/d3/d3-geo-projection/blob/main/src/quincuncial/index.js
+Bundled versions and licenses: js/vendor/README.md and projection-math-LICENSE.txt.
+
+Gall-Peters: cylindrical equal-area at standard parallels +/-45 degrees.
+Unit-sphere coordinates x=longitude/sqrt(2), y=sqrt(2)*sin(latitude).
+Stages: sphere, equal-height cylinder, Lambert equal-area rectangle, reciprocal
+horizontal/vertical scaling to the Gall-Peters rectangle. Area scale stays 1
+throughout the final planar deformation. The full latitude range is retained.
+https://proj.org/en/stable/operations/projections/cea.html
+
+Orthographic (two hemispheres): radial meshes cover both z>=0 and z<=0 halves
+of the unit sphere, duplicating their equatorial boundary. The rear half rotates
+outward by -pi around the vertical tangent hinge x=1,z=0, while both halves
+translate left by 1. They then project along parallel z rays to z=1, yielding
+two tangent unit disks centered at x=-1 and x=1. No hemisphere is discarded.
+https://proj.org/en/stable/operations/projections/ortho.html
+
+Azimuthal equidistant: radial distance c, equal to great-circle distance from
+the front center on the unit sphere. The antipode opens into the rim at r=pi.
+Stages: globe, hemispherical bowl, planar disk. The bowl uses radius 2 and
+half the original polar angle; the final stage straightens its radial arcs.
+https://proj.org/en/stable/operations/projections/aeqd.html
+https://github.com/d3/d3-geo/blob/main/src/projection/azimuthalEquidistant.js
+
+Werner (Bonne at standard parallel 90 degrees): rho=pi/2-latitude,
+E=longitude*cos(latitude)/rho; x=rho*sin(E), y=pi/2-rho*cos(E).
+The north pole uses the finite rho=0 limit. Stages first unfold a sinusoidal
+map, then bend each parallel into a concentric arc without changing its length.
+https://proj.org/en/stable/operations/projections/bonne.html
+https://github.com/d3/d3-geo-projection/blob/main/src/bonne.js
+
+Collignon: alpha=sqrt(1-sin(latitude)), x=2*longitude*alpha/sqrt(pi),
+y=sqrt(pi)*(1-alpha). Rings first form a conical surface, then translate to
+touch the final plane, before cutting and unrolling into the triangular map.
+https://proj.org/en/stable/operations/projections/collg.html
+https://github.com/d3/d3-geo-projection/blob/main/src/collignon.js
+
+Globe gores: twelve independently triangulated 30-degree sinusoidal regions.
+Each gore has x=center+(longitude-center)*cos(latitude), y=latitude on the
+finished map. The first stage opens the meridian seams and spreads the bowed
+strips side by side; the last flattens their north-south curvature and unrolls
+each narrow longitude arc. Differentiation stays on one side of each gore cut.
+https://blogs.loc.gov/maps/2025/03/globe-gores/
+https://proj.org/en/stable/operations/projections/sinu.html
+
+Stereographic: source (0,0,-1), tangent plane z=1 on the unit sphere.
+At angular distance c from the front center, radial distance is 2*tan(c/2).
+Every animated vertex follows the straight source-to-plane ray. The source
+point itself is singular and excluded from the radial mesh. The mesh is cropped
+at angular distance 120 degrees from the front center at every progress value,
+including the starting globe. The removed rear 60-degree cap covers one quarter
+of the sphere. At step 0 the rim is at z=-1/2; on the final plane its radius is
+2*sqrt(3). The camera frames the complete disk, using the normal scene fog and
+zoom controls. Distortion measurements cover only this retained region.
+https://proj.org/en/stable/operations/projections/stere.html
+
 Aitoff: reuses Winkel Tripel's first three construction stages, rescaled to
 thirds: globe, halved-longitude hemisphere, azimuthal equidistant disk, ellipse.
 https://proj.org/en/stable/operations/projections/aitoff.html

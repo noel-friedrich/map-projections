@@ -88,5 +88,45 @@ export const distortionScores = {
   "mollweide": {
     "areaDifference": 0,
     "angleError": 32.267748
+  },
+  "stereographic": {
+    "areaDifference": 66.667017,
+    "angleError": 0
+  },
+  "orthographic": {
+    "areaDifference": 50,
+    "angleError": 49.183111
+  },
+  "azimuthal-equidistant": {
+    "areaDifference": 61.103064,
+    "angleError": 33.579603
+  },
+  "werner": {
+    "areaDifference": 0,
+    "angleError": 45.738346
+  },
+  "collignon": {
+    "areaDifference": 0,
+    "angleError": 64.212611
+  },
+  "gores": {
+    "areaDifference": 0,
+    "angleError": 3.744679
+  },
+  "gall-peters": {
+    "areaDifference": 0,
+    "angleError": 33.030615
+  },
+  "authagraph": {
+    "areaDifference": 26.241243,
+    "angleError": 12.935933
+  },
+  "dymaxion": {
+    "areaDifference": 2.485472,
+    "angleError": 7.038937
+  },
+  "peirce": {
+    "areaDifference": 44.51891,
+    "angleError": 0
   }
 };

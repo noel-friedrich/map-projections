@@ -113,6 +113,10 @@ export function createEarthControls(canvas, camera, orbitControls, onRotate) {
     );
     window.addEventListener("keydown", (event) => {
         if (!arrowKeys.includes(event.key)) return;
+        if (event.ctrlKey && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
+            pressedKeys.delete(event.key);
+            return;
+        }
         // Keep native keyboard controls available for the slider and selector.
         if (event.target.closest("input, select, textarea, [contenteditable]"))
             return;

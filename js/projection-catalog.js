@@ -86,5 +86,18 @@ export const projectionCatalog = [
   {
     "id": "mollweide",
     "title": "Mollweide"
-  }
+  },
+  {
+    "id": "stereographic",
+    "title": "Stereographic"
+  },
+  { "id": "orthographic", "title": "Orthographic (two hemispheres)" },
+  { "id": "azimuthal-equidistant", "title": "Azimuthal equidistant" },
+  { "id": "werner", "title": "Werner" },
+  { "id": "collignon", "title": "Collignon" },
+  { "id": "gores", "title": "Globe gores" },
+  { "id": "gall-peters", "title": "Gall–Peters" },
+  { "id": "authagraph", "title": "AuthaGraph" },
+  { "id": "dymaxion", "title": "Dymaxion" },
+  { "id": "peirce", "title": "Peirce quincuncial" }
 ];

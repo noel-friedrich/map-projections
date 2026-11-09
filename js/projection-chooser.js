@@ -2,14 +2,16 @@ import { projectionCatalog } from './projection-catalog.js';
 
 const shapeGroups = [
     // Rectangles.
-    ['mercator', 'same-height', 'classic', 'equirectangular', 'torus'],
+    ['mercator', 'same-height', 'gall-peters', 'classic', 'equirectangular', 'torus', 'authagraph', 'peirce'],
     // Curved and interrupted outlines.
-    ['sinusoidal', 'robinson', 'equal-earth', 'goode', 'winkel-tripel'],
-    // Ellipses, circles, conics, then polyhedral nets.
+    ['sinusoidal', 'robinson', 'equal-earth', 'goode', 'gores', 'winkel-tripel'],
+    // Ellipses, circles, heart, conics, triangle, then polyhedral nets.
     ['aitoff', 'hammer', 'mollweide'],
-    ['lambert-azimuthal'],
+    ['lambert-azimuthal', 'stereographic', 'azimuthal-equidistant', 'orthographic'],
+    ['werner'],
     ['lambert-conic', 'albers'],
-    ['tetrahedral', 'tetrahedron', 'cube', 'octahedron', 'dodecahedron', 'icosahedron'],
+    ['collignon'],
+    ['tetrahedral', 'tetrahedron', 'cube', 'octahedron', 'dodecahedron', 'icosahedron', 'dymaxion'],
 ];
 const shapeOrder = new Map(shapeGroups.flat().map((id, index) => [id, index]));
 const chooserCatalog = projectionCatalog.toSorted((a, b) =>

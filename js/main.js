@@ -240,6 +240,17 @@ window.addEventListener("keydown", (event) => {
         view.renderer.domElement.focus({ preventScroll: true });
         return;
     }
+    if (
+        event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey &&
+        ["ArrowLeft", "ArrowRight"].includes(event.code)
+    ) {
+        if (event.repeat || event.target.closest(
+            'select, textarea, [contenteditable], input:not([type="range"])',
+        )) return;
+        event.preventDefault();
+        stepProjection(event.code === "ArrowLeft");
+        return;
+    }
     if (!infoPanel.inert) return;
     if (
         !["KeyN", "KeyB"].includes(event.code) ||
@@ -296,8 +307,6 @@ document.getElementById("reset").addEventListener("click", () => {
     setGuessingMode(false);
     earthControls.reset();
     model.resetRotation();
-    currentProgress = 0;
-    slider.value = currentProgress;
     view.reset();
     updateProjection();
     lastFrameTime = performance.now();

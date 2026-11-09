@@ -3,6 +3,9 @@ import { projectPoint, projectAzimuthal, getProjectionState } from "./projection
 import { createMapMaterial } from "./texture.js";
 import { GOODE_LOBES } from "./pseudocylindrical.js";
 import { createPolyhedralCoordinate, animatePolyhedral } from './platonic.js';
+import { projectStereographic, stereographicRowAngle } from './stereographic.js';
+import { GORES, projectOrthographic } from './simple-projections.js';
+import {advancedSurface,animateAdvanced} from './advanced-projections.js';
 import {
     TETRA_VERTICES,
     TETRA_FACES,
@@ -39,13 +42,13 @@ function makeSurface(
     return { geometry, coordinates };
 }
 
-function createAzimuthalGeometry() {
+function createAzimuthalGeometry(stereographic = false) {
     const coordinates = [],
         indices = [];
     const columns = 192,
         rows = 128;
     for (let row = 0; row <= rows; row++) {
-        const angle = (row / rows) * Math.PI;
+        const angle = stereographic ? stereographicRowAngle(row / rows) : (row / rows) * Math.PI;
         for (let column = 0; column <= columns; column++) {
             const azimuth = (column / columns) * Math.PI * 2;
             const direction = [
@@ -72,6 +75,23 @@ function createAzimuthalGeometry() {
         }
     }
     return makeSurface(coordinates, indices);
+}
+
+function createOrthographicGeometry() {
+    const coordinates=[], indices=[], rows=64, columns=192;
+    for(const half of [1,-1]) {
+        const offset=coordinates.length;
+        for(let row=0;row<=rows;row++) for(let column=0;column<=columns;column++) {
+            const angle=row/rows*Math.PI/2, azimuth=column/columns*2*Math.PI;
+            const direction=[Math.sin(angle)*Math.cos(azimuth),Math.sin(angle)*Math.sin(azimuth),half*Math.cos(angle)];
+            coordinates.push({direction,half,longitude:Math.atan2(direction[0],direction[2]),latitude:Math.asin(direction[1])});
+            if(row<rows&&column<columns) {
+                const a=offset+row*(columns+1)+column,b=a+1,c=a+columns+1;
+                indices.push(a,c,b,b,c,c+1);
+            }
+        }
+    }
+    return makeSurface(coordinates,indices);
 }
 
 function createTetrahedralGeometry() {
@@ -143,15 +163,15 @@ function createPolyhedralGeometry(solid) {
     return makeSurface(coordinates, indices);
 }
 
-function createSurfaceGeometry() {
+function createSurfaceGeometry(patches = GOODE_LOBES) {
     const coordinates = [];
     const indices = [];
     const uvs = [];
-    for (const lobe of GOODE_LOBES) {
+    for (const lobe of patches) {
         const columns = Math.ceil(
             ((lobe.east - lobe.west) / (2 * Math.PI)) * 192,
         );
-        const rows = 64;
+        const rows = patches === GORES ? 128 : 64;
         const offset = coordinates.length;
         for (let row = 0; row <= rows; row++) {
             const latitude =
@@ -280,17 +300,21 @@ export function createModel() {
     const position = { x: 0, y: 0, z: 0 };
 
     function update(state) {
-        const kind = state.polyhedral ? state.type : state.tetrahedral
+        const kind = state.advanced ? state.type : state.orthographic ? 'orthographic' : state.gores ? 'gores' : state.stereographic ? 'stereographic' : state.polyhedral ? state.type : state.tetrahedral
             ? "tetrahedral"
             : state.azimuthal
               ? "azimuthal"
               : "standard";
+        if(state.advanced&&!surfaces.has(kind)) {
+            const {coordinates,indices}=advancedSurface(kind);
+            surfaces.set(kind,makeSurface(coordinates,indices));
+        }
         if (!surfaces.has(kind))
             surfaces.set(
                 kind,
-                state.polyhedral ? createPolyhedralGeometry(state.solid) : state.tetrahedral
+                state.orthographic ? createOrthographicGeometry() : state.gores ? createSurfaceGeometry(GORES) : state.polyhedral ? createPolyhedralGeometry(state.solid) : state.tetrahedral
                     ? createTetrahedralGeometry()
-                    : createAzimuthalGeometry(),
+                    : createAzimuthalGeometry(Boolean(state.stereographic)),
             );
         const surface = surfaces.get(kind);
         ({ geometry, coordinates } = surface);
@@ -304,7 +328,7 @@ export function createModel() {
         const tetraAnimation = state.tetrahedral
             ? createTetrahedralAnimation(state.progress)
             : null;
-        const azimuthalRows = state.azimuthal ? new Map() : null;
+        const azimuthalRows = state.azimuthal || state.stereographic ? new Map() : null;
         for (let i = 0; i < coordinates.length; i++) {
             const coordinate = coordinates[i];
             const {
@@ -313,7 +337,11 @@ export function createModel() {
                 lobeCenter,
             } = coordinate;
             const latitude = latitudeMin + (fullLatitude + Math.PI / 2) * (latitudeMax - latitudeMin) / Math.PI;
-            if (state.polyhedral)
+            if(state.advanced)
+                animateAdvanced(coordinate.advanced,state,position);
+            else if(state.orthographic)
+                projectOrthographic(coordinate.direction,coordinate.half,state.progress,position);
+            else if (state.polyhedral)
                 animatePolyhedral(coordinate.polyhedral, state.progress, position, state.animation);
             else if (state.tetrahedral)
                 animateTetrahedral(
@@ -322,14 +350,16 @@ export function createModel() {
                     position,
                     tetraAnimation,
                 );
-            else if (state.azimuthal) {
+            else if (state.azimuthal || state.stereographic) {
                 let row = azimuthalRows.get(coordinate.angle);
                 if (!row) {
-                    row = projectAzimuthal(
+                    const project = state.stereographic ? projectStereographic : projectAzimuthal;
+                    row = project(
                         coordinate.angle,
                         0,
                         state.progress,
                         {},
+                        state.equidistant,
                     );
                     azimuthalRows.set(coordinate.angle, row);
                 }
@@ -343,9 +373,9 @@ export function createModel() {
                 uv.setY(i, (latitude + Math.PI / 2) / Math.PI);
                 sphereDirections.setXYZ(
                     i,
-                    Math.cos(latitude) * Math.sin(longitude),
-                    Math.sin(latitude),
-                    Math.cos(latitude) * Math.cos(longitude),
+                    coordinate.geography?.[0] ?? Math.cos(latitude) * Math.sin(longitude),
+                    coordinate.geography?.[1] ?? Math.sin(latitude),
+                    coordinate.geography?.[2] ?? Math.cos(latitude) * Math.cos(longitude),
                 );
             }
         }
@@ -360,7 +390,7 @@ export function createModel() {
         // Culling is disabled; recompute raycast bounds lazily only when clicked.
         geometry.boundingSphere = null;
         const cylindrical =
-            !state.pseudo && !state.tetrahedral && !state.azimuthal && !state.polyhedral && !state.conic && !state.ellipse && !state.toroidal;
+            !state.pseudo && !state.tetrahedral && !state.azimuthal && !state.polyhedral && !state.conic && !state.ellipse && !state.toroidal && !state.stereographic && !state.orthographic && !state.werner && !state.gores && !state.advanced;
         cylinderGuide.visible = cylindrical && state.project < 1;
         tetrahedronGuide.visible =
             Boolean(state.tetrahedral) && state.progress < 0.5;

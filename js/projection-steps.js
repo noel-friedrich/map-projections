@@ -12,6 +12,16 @@ const conic = property => [
     `Adjust latitude spacing to preserve ${property}.`,
 ];
 const descriptions = {
+    authagraph: [globe, 'Transfer the spherical domains toward the tetrahedron using Narukawa’s published mapping.', 'Complete the mapping onto the tetrahedron’s flat faces.', 'Unfold the tetrahedron into a flat strip.', 'Move the cut portion across the strip to form the rectangular map.'],
+    dymaxion: [globe, 'Map the globe onto an icosahedron using Fuller’s spherical-triangle transformation.', 'Unfold the faces and split faces into the Dymaxion AirOcean arrangement.'],
+    peirce: ['Start with the globe viewed from the north pole.', 'Cut at the equator and hinge the southern hemisphere outward so both halves face forward.', 'Flatten each hemisphere into its own conformal square, with a pole at each center.', 'Cut the southern square into four triangles and move them around the northern square to fill the corners.'],
+    'gall-peters': [globe, 'Project onto a cylinder while keeping each point’s height.', 'Cut the cylinder at the back and unroll it into an equal-area rectangle.', 'Narrow and stretch the rectangle equally to give true scale at 45 degrees north and south.'],
+    orthographic: [globe, 'Cut into front and back hemispheres, then hinge the back half outward so both face forward.', 'Project both hemispheres along parallel rays onto two side-by-side circular disks.'],
+    'azimuthal-equidistant': [globe, 'Open the globe into a hemispherical bowl.', 'Flatten radially so distance from the center equals distance along the original globe.'],
+    werner: [globe, 'Space latitude rings evenly from south to north.', 'Unroll the latitude rings into a sinusoidal map.', 'Bend the horizontal parallels into concentric arcs around the north pole, forming the Werner heart.'],
+    collignon: [globe, 'Reshape latitude rings into a cone, with heights and widths chosen to preserve areas.', 'Move each closed latitude ring forward until its prime-meridian point touches the final map plane.', 'Cut each ring at the back and unroll it into a straight line to form the Collignon triangle.'],
+    gores: [globe, 'Cut twelve pole-to-pole strips and spread them side by side, keeping their north-south curvature.', 'Flatten and unroll each strip into a sinusoidal gore, like peeling an orange.'],
+    stereographic: ['Start with the globe cropped to 120 degrees from the front center, leaving the rear cap open.', 'Project from the back point onto the front tangent plane to form the circular stereographic map.'],
     aitoff: [globe, 'Halve longitudes to fit the world onto a hemisphere.', 'Flatten into an equidistant disk: radius follows angular distance on the compressed hemisphere.', 'Double the disk width to form the Aitoff ellipse.'],
     hammer: [globe, 'Halve longitudes to fit the world onto a hemisphere.', 'Flatten into a Lambert equal-area disk, spacing points to preserve relative areas.', 'Double the disk width to form the equal-area Hammer ellipse.'],
     mollweide: [globe, 'Adjust latitude heights and ring widths for Mollweide equal-area spacing.', 'Move each closed latitude ring forward until its prime-meridian point touches the final map plane.', 'Cut each ring at the back and unroll it from its contact point into a horizontal line.'],

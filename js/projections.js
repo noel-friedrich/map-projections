@@ -3,6 +3,9 @@ import { CONIC_TYPES, createConicState, projectConic } from './conic.js';
 import { projectWinkel, projectAitoff, projectHammer } from './winkel.js';
 import { constructionStages } from './construction-stages.js';
 import { createTorusState, projectTorus } from './torus.js';
+import { projectStereographic } from './stereographic.js';
+import { projectOrthographic, projectWerner, projectGores } from './simple-projections.js';
+import {ADVANCED_TYPES,advancedState,advancedCoordinate,animateAdvanced} from './advanced-projections.js';
 import { PLATONIC_SOLIDS, createPolyhedralCoordinate, createPolyhedralAnimation, animatePolyhedral } from './platonic.js';
 import {
     createTetrahedralCoordinate,
@@ -50,6 +53,21 @@ export function getPreviousProjectionCheckpoint(type, progress) {
 }
 
 export function getProjectionState(type, progress) {
+    if(ADVANCED_TYPES.includes(type)) return advancedState(type,progress);
+    if(type==='gall-peters') {
+        const base=getProjectionState('same-height',progress<=1/3 ? progress*2.1 : Math.min(1,0.7+(progress-1/3)*0.9));
+        const state={...base,type,progress,gallPeters:true,base,gallStretch:clamp01(progress*3-2)};
+        state.frameExtent=constructionExtent(state);
+        return state;
+    }
+    if (['orthographic','werner','gores'].includes(type)) {
+        const state = {type, progress, [type]:true, latitudeRange:Math.PI/2};
+        if(type==='werner') state.base=getProjectionState('sinusoidal',Math.min(1,progress*1.5));
+        state.frameExtent=constructionExtent(state);
+        return state;
+    }
+    if(type==='azimuthal-equidistant') return {type,progress,azimuthal:true,equidistant:true,latitudeRange:Math.PI/2};
+    if (type === 'stereographic') return { type, progress, stereographic: true, latitudeRange: Math.PI / 2 };
     if (type === 'torus') {
         const state = createTorusState(progress);
         state.frameExtent = constructionExtent(state);
@@ -84,13 +102,14 @@ export function getProjectionState(type, progress) {
             "goode",
             "equirectangular",
             "mollweide",
+            "collignon",
         ].includes(type)
     ) {
         const opening = type === "goode" ? clamp01(progress * 2) : progress;
-        const alignRings = ['mollweide', 'robinson', 'equal-earth'].includes(type);
+        const alignRings = ['mollweide', 'robinson', 'equal-earth', 'collignon'].includes(type);
         const reshape = alignRings ? clamp01(progress * 3) : clamp01(opening * 2);
         const unroll = alignRings ? clamp01(progress * 3 - 2) : clamp01(opening * 2 - 1);
-        return {
+        const state = {
             type,
             progress,
             pseudo: true,
@@ -104,6 +123,8 @@ export function getProjectionState(type, progress) {
             profiles: new Map(),
             columns: new Map(),
         };
+        if(type==='collignon') state.frameExtent=constructionExtent(state);
+        return state;
     }
     const mercator = type === "mercator";
     // Mercator: equal-height projection, unroll, then conformal vertical stretch.
@@ -177,6 +198,27 @@ function longitudeProfile(longitude, state) {
 
 // Write into a reusable position object to avoid allocations for every vertex.
 export function projectPoint(longitude, latitude, state, position, lobeCenter) {
+    if(state.advanced) {
+        const d=[Math.cos(latitude)*Math.sin(longitude),Math.sin(latitude),Math.cos(latitude)*Math.cos(longitude)];
+        return animateAdvanced(advancedCoordinate(state.type,d,lobeCenter),state,position);
+    }
+    if(state.gallPeters) {
+        projectPoint(longitude,latitude,state.base,position);
+        position.x*=lerp(1,Math.SQRT1_2,state.gallStretch);
+        position.y*=lerp(1,Math.SQRT2,state.gallStretch);
+        return position;
+    }
+    if(state.orthographic) {
+        const direction=[Math.cos(latitude)*Math.sin(longitude),Math.sin(latitude),Math.cos(latitude)*Math.cos(longitude)];
+        return projectOrthographic(direction,lobeCenter??(direction[2]>=0?1:-1),state.progress,position);
+    }
+    if(state.werner) return state.progress<=2/3 ? projectPoint(longitude,latitude,state.base,position) : projectWerner(longitude,latitude,state.progress,position);
+    if(state.gores) return projectGores(longitude,latitude,state.progress,position,lobeCenter);
+    if (state.stereographic) {
+        const x = Math.cos(latitude) * Math.sin(longitude), y = Math.sin(latitude);
+        const angle = Math.atan2(Math.hypot(x, y), Math.cos(latitude) * Math.cos(longitude));
+        return projectStereographic(angle, Math.atan2(y, x), state.progress, position);
+    }
     if (state.toroidal) return projectTorus(longitude, latitude, state, position);
     if (state.conic) return projectConic(longitude, latitude, state, position);
     if (state.ellipse) {
@@ -209,6 +251,7 @@ export function projectPoint(longitude, latitude, state, position, lobeCenter) {
             azimuth,
             state.progress,
             position,
+            state.equidistant,
         );
     }
     if (state.pseudo) {
@@ -295,16 +338,16 @@ export function projectPoint(longitude, latitude, state, position, lobeCenter) {
     return position;
 }
 
-export function projectAzimuthal(angle, azimuth, progress, position) {
+export function projectAzimuthal(angle, azimuth, progress, position, equidistant = false) {
     // Open the full sphere into a hemispherical bowl first, then flatten it.
     // The front center stays at z=1 and the antipode opens into the bowl's rim.
     const reshape = clamp01(progress * 2),
         flatten = clamp01(progress * 2 - 1);
-    const bowlRadius = lerp(1, Math.SQRT2, reshape);
+    const bowlRadius = lerp(1, equidistant ? 2 : Math.SQRT2, reshape);
     const polarAngle = angle * (1 - reshape / 2);
     const radius = lerp(
         bowlRadius * Math.sin(polarAngle),
-        2 * Math.sin(angle / 2),
+        equidistant ? angle : 2 * Math.sin(angle / 2),
         flatten,
     );
     position.x = radius * Math.cos(azimuth);
