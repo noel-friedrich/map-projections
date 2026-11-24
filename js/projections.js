@@ -98,6 +98,8 @@ export function getProjectionState(type, progress) {
         [
             "sinusoidal",
             "robinson",
+            "natural-earth-1",
+            "natural-earth-2",
             "equal-earth",
             "goode",
             "equirectangular",
@@ -106,7 +108,7 @@ export function getProjectionState(type, progress) {
         ].includes(type)
     ) {
         const opening = type === "goode" ? clamp01(progress * 2) : progress;
-        const alignRings = ['mollweide', 'robinson', 'equal-earth', 'collignon'].includes(type);
+        const alignRings = ['mollweide', 'robinson', 'natural-earth-1', 'natural-earth-2', 'equal-earth', 'collignon'].includes(type);
         const reshape = alignRings ? clamp01(progress * 3) : clamp01(opening * 2);
         const unroll = alignRings ? clamp01(progress * 3 - 2) : clamp01(opening * 2 - 1);
         const state = {

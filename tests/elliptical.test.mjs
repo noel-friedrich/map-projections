@@ -43,7 +43,7 @@ test('Mollweide uses the defining latitude equation and a full 2:1 elliptical bo
     }
 });
 
-for (const type of ['mollweide','robinson','equal-earth']) {
+for (const type of ['mollweide','robinson','natural-earth-1','natural-earth-2','equal-earth']) {
 test(`${type} moves closed rings to the final plane before unrolling around fixed contact points`,()=>{
     assert.deepEqual(getProjectionCheckpoints(type),[0,1/3,2/3,1]);
     for (const lat of [-Math.PI/2,-1,-0.4,0,0.4,1,Math.PI/2]) {

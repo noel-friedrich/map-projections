@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { createModel } from '../js/model.js';
 import { getProjectionState } from '../js/projections.js';
 import { loadMapTexture } from '../js/texture.js';
+import { drawGraticule } from '../js/graticule.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setSize(640, 400);
@@ -20,7 +21,10 @@ renderer.setClearColor(0x000000, 0);
 document.body.append(renderer.domElement);
 const scene = new THREE.Scene();
 const model = createModel();
-model.setTexture(await loadMapTexture(renderer));
+const texture = await loadMapTexture(renderer);
+drawGraticule(texture.image.getContext('2d'), 30, false);
+texture.needsUpdate = true;
+model.setTexture(texture);
 scene.add(model.mesh);
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
 

@@ -1,5 +1,15 @@
 Projection equations and reference data
 
+Natural Earth I and II: unit-sphere polynomial definitions. These are map
+projections, distinct from the Natural Earth I raster image used as the texture.
+https://proj.org/en/stable/operations/projections/natearth.html
+https://proj.org/en/stable/operations/projections/natearth2.html
+https://github.com/OSGeo/PROJ/blob/master/src/projections/natearth.cpp
+https://github.com/d3/d3-geo-projection/blob/main/src/naturalEarth2.js
+The animation reshapes latitude rings to the polynomial widths and heights,
+translates their front points onto the map plane, then cuts and unrolls each
+ring from the back. Both are compromise projections, not equal-area or conformal.
+
 AuthaGraph: Narukawa, H. (2022), "Formulation of AuthaGraph Map Projection
 and an Evaluation of its Distortion", Map 60(1), 1-16, DOI 10.11212/jjca.60.1_1.
 Uses the author's published formulation (which modifies the earlier auxiliary

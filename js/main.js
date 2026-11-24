@@ -9,6 +9,7 @@ import {
 import { loadMapTexture } from "./texture.js";
 import { createEarthControls } from "./controls.js";
 import { createMapAnnotations } from "./annotations.js";
+import { GRATICULE_SPACINGS, drawGraticule } from './graticule.js';
 import { projectionInfo } from "./projection-info.js";
 import { projectionCatalog } from "./projection-catalog.js";
 import { createProjectionChooser } from "./projection-chooser.js";
@@ -17,6 +18,16 @@ import { createProjectionStepList } from './projection-steps.js';
 
 const container = document.getElementById("view");
 const slider = document.getElementById("progress");
+const graticuleSlider = document.getElementById('graticule-spacing');
+const indicatricesCheckbox = document.getElementById('show-indicatrices');
+let redrawMap = () => {};
+graticuleSlider.addEventListener('input', () => {
+    const spacing = GRATICULE_SPACINGS[Number(graticuleSlider.value)];
+    document.getElementById('graticule-spacing-value').textContent = `${spacing}°`;
+    graticuleSlider.setAttribute('aria-valuetext', `${spacing} degrees`);
+    redrawMap();
+});
+indicatricesCheckbox.addEventListener('change', () => redrawMap());
 let currentProjection = projectionCatalog[0].id;
 const projectionDialog = createProjectionChooser(chooseProjection);
 const status = document.getElementById("status");
@@ -316,12 +327,16 @@ document.getElementById("reset").addEventListener("click", () => {
 loadMapTexture(view.renderer)
     .then((texture) => {
         model.setTexture(texture);
-        createMapAnnotations(
+        const annotations = createMapAnnotations(
             view.renderer.domElement,
             view.camera,
             model,
             texture,
+            context => drawGraticule(context,
+                GRATICULE_SPACINGS[Number(graticuleSlider.value)], indicatricesCheckbox.checked),
         );
+        redrawMap = annotations.redraw;
+        redrawMap();
         status.textContent = "";
     })
     .catch((error) => {

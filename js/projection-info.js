@@ -1,5 +1,7 @@
 // Short summaries; each entry links to its Wikipedia source.
 export const projectionInfo = {
+  'natural-earth-1': {article:'Natural_Earth_projection',text:'A compromise pseudocylindrical world map with gently rounded corners. Its polynomial latitude spacing and parallel widths balance area and shape distortion, without preserving either exactly. The poles form straight lines.'},
+  'natural-earth-2': {article:'Natural_Earth_projection',text:'A more rounded companion to Natural Earth I. Its meridians bend steeply inward near short, straight pole lines, giving the map an elongated globe shape. This compromise projection balances area and shape distortion without preserving either exactly.'},
   authagraph: {article:'AuthaGraph_projection',text:'A rectangular tetrahedral world map, implemented from Hajime Narukawa’s 2022 mathematical formulation. Transfers spherical regions to a tetrahedron, unfolds its faces and rearranges the strip into a rectangle. Balances area and shape distortion.'},
   dymaxion: {article:'Dymaxion_map',text:'Buckminster Fuller’s world map uses an icosahedron and the AirOcean arrangement, with additional cuts in selected faces. The spherical-triangle mapping reduces distortion while keeping most land connected.'},
   peirce: {article:'Peirce_quincuncial_projection',text:'A conformal square world map, except at four singular points on the equator. The north pole lies at the center and the south pole appears at all four corners. Opposite edges join so the map can tile continuously.'},

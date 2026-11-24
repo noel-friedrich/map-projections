@@ -62,22 +62,6 @@ export async function loadMapTexture(renderer) {
     canvas.height = image.naturalHeight;
     const context = canvas.getContext("2d");
     context.drawImage(image, 0, 0);
-    // Draw the geographic grid into the texture so it rotates with the Earth.
-    context.strokeStyle = "rgba(255,255,255,0.35)";
-    context.lineWidth = 1;
-    context.beginPath();
-    for (let longitude = -180; longitude <= 180; longitude += 30) {
-        const x = ((longitude + 180) / 360) * canvas.width;
-        context.moveTo(x, 0);
-        context.lineTo(x, canvas.height);
-    }
-    for (let latitude = -60; latitude <= 60; latitude += 30) {
-        const y = ((90 - latitude) / 180) * canvas.height;
-        context.moveTo(0, y);
-        context.lineTo(canvas.width, y);
-    }
-    context.stroke();
-
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.colorSpace = THREE.SRGBColorSpace;

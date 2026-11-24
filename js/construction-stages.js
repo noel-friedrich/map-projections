@@ -13,6 +13,8 @@ export const constructionStages = {
     hammer: ['Globe', 'Longitudes halved', 'Lambert equal-area disk', 'Hammer ellipse'],
     mollweide: ['Globe', 'Mollweide latitude rings', 'Prime meridian on the map plane', 'Mollweide ellipse'],
     robinson: ['Globe', 'Robinson latitude rings', 'Prime meridian on the map plane', 'Robinson map'],
+    'natural-earth-1': ['Globe', 'Natural Earth I latitude rings', 'Prime meridian on the map plane', 'Natural Earth I map'],
+    'natural-earth-2': ['Globe', 'Natural Earth II latitude rings', 'Prime meridian on the map plane', 'Natural Earth II map'],
     'equal-earth': ['Globe', 'Equal Earth latitude rings', 'Prime meridian on the map plane', 'Equal Earth map'],
     torus: ['Globe', 'Poles pinched together', 'Torus', 'Horizontal cylinder', 'Rectangle'],
     'lambert-conic': ['Northern hemisphere', 'Cone', 'Opened cone', 'Flat sector', 'Lambert spacing'],

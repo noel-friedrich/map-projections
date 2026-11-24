@@ -47,6 +47,18 @@ const ROBINSON = [
 ];
 
 export function latitudeProfile(type, latitude) {
+    if (type === 'natural-earth-1' || type === 'natural-earth-2') {
+        const p2 = latitude * latitude, p4 = p2 * p2;
+        if (type === 'natural-earth-1') return {
+            radius: 0.8707 + p2 * (-0.131979 + p2 * (-0.013791 + p4 * p2 * (0.003971 - 0.001529 * p2))),
+            height: latitude * (1.007226 + p2 * (0.015085 + p4 * (-0.044475 + p2 * (0.028874 - 0.005916 * p2)))),
+        };
+        const p6 = p2 * p4;
+        return {
+            radius: 0.84719 - 0.13063 * p2 + p6 * p6 * (-0.04515 + 0.05494 * p2 - 0.02326 * p4 + 0.00331 * p6),
+            height: latitude * (1.01183 + p4 * p4 * (-0.02625 + 0.01926 * p2 - 0.00396 * p4)),
+        };
+    }
     if(type==='collignon') {
         const alpha=Math.sqrt(Math.max(0,1-Math.sin(latitude)));
         return {radius:2/Math.sqrt(Math.PI)*alpha,height:Math.sqrt(Math.PI)*(1-alpha)};

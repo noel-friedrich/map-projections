@@ -99,5 +99,7 @@ export const projectionCatalog = [
   { "id": "gall-peters", "title": "Gall–Peters" },
   { "id": "authagraph", "title": "AuthaGraph" },
   { "id": "dymaxion", "title": "Dymaxion" },
-  { "id": "peirce", "title": "Peirce quincuncial" }
+  { "id": "peirce", "title": "Peirce quincuncial" },
+  { "id": "natural-earth-1", "title": "Natural Earth I" },
+  { "id": "natural-earth-2", "title": "Natural Earth II" }
 ];

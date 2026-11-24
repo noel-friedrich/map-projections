@@ -128,5 +128,13 @@ export const distortionScores = {
   "peirce": {
     "areaDifference": 44.51891,
     "angleError": 0
+  },
+  "natural-earth-1": {
+    "areaDifference": 19.502424,
+    "angleError": 20.523076
+  },
+  "natural-earth-2": {
+    "areaDifference": 17.196305,
+    "angleError": 21.41772
   }
 };

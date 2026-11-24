@@ -4,7 +4,7 @@ const shapeGroups = [
     // Rectangles.
     ['mercator', 'same-height', 'gall-peters', 'classic', 'equirectangular', 'torus', 'authagraph', 'peirce'],
     // Curved and interrupted outlines.
-    ['sinusoidal', 'robinson', 'equal-earth', 'goode', 'gores', 'winkel-tripel'],
+    ['sinusoidal', 'robinson', 'natural-earth-1', 'natural-earth-2', 'equal-earth', 'goode', 'gores', 'winkel-tripel'],
     // Ellipses, circles, heart, conics, triangle, then polyhedral nets.
     ['aitoff', 'hammer', 'mollweide'],
     ['lambert-azimuthal', 'stereographic', 'azimuthal-equidistant', 'orthographic'],

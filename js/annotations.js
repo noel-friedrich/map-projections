@@ -1,10 +1,10 @@
 import * as THREE from "three";
+import { MAP_CIRCLE_RADIUS, paintMapCircles } from './map-circles.js';
 
-const RADIUS = 1 / 15;
+const RADIUS = MAP_CIRCLE_RADIUS;
 const COS_RADIUS = Math.cos(RADIUS);
-const TAU = 2 * Math.PI;
 
-export function createMapAnnotations(canvas, camera, model, texture) {
+export function createMapAnnotations(canvas, camera, model, texture, paintOverlays = () => {}) {
     const image = texture.image;
     const context = image.getContext("2d");
     const original = document.createElement("canvas");
@@ -15,64 +15,6 @@ export function createMapAnnotations(canvas, camera, model, texture) {
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     let press = null;
-
-    function paintCircle(center) {
-        const { width, height } = image;
-        const latitude = Math.asin(THREE.MathUtils.clamp(center.y, -1, 1));
-        const longitude = Math.atan2(center.x, center.z);
-        const pixelAngle = Math.PI / height;
-        const extent = RADIUS + pixelAngle;
-        const top = Math.max(
-            0,
-            Math.floor((0.5 - (latitude + extent) / Math.PI) * height),
-        );
-        const bottom = Math.min(
-            height,
-            Math.ceil((0.5 - (latitude - extent) / Math.PI) * height),
-        );
-        const longitudeExtent =
-            Math.abs(latitude) + extent >= Math.PI / 2
-                ? Math.PI
-                : Math.asin(Math.sin(extent) / Math.cos(latitude));
-        const centerX = (longitude / TAU + 0.5) * width;
-        const halfWidth = Math.ceil((longitudeExtent / TAU) * width) + 1;
-        const firstX = Math.floor(centerX - halfWidth);
-        const lastX = Math.min(
-            firstX + width - 1,
-            Math.ceil(centerX + halfWidth),
-        );
-        const pixels = context.getImageData(0, top, width, bottom - top);
-        for (let y = top; y < bottom; y++) {
-            const lat = (0.5 - (y + 0.5) / height) * Math.PI;
-            const cosLat = Math.cos(lat);
-            const sinLat = Math.sin(lat);
-            for (let unwrappedX = firstX; unwrappedX <= lastX; unwrappedX++) {
-                const x = ((unwrappedX % width) + width) % width;
-                const lon = ((x + 0.5) / width - 0.5) * TAU;
-                const dot =
-                    center.x * cosLat * Math.sin(lon) +
-                    center.y * sinLat +
-                    center.z * cosLat * Math.cos(lon);
-                const distance = Math.acos(THREE.MathUtils.clamp(dot, -1, 1));
-                const coverage = THREE.MathUtils.clamp(
-                    (RADIUS - distance) / pixelAngle + 0.5,
-                    0,
-                    1,
-                );
-                if (coverage === 0) continue;
-                const offset = ((y - top) * width + x) * 4;
-                // Orange is composited into the map itself, beneath all projection work.
-                for (let channel = 0; channel < 3; channel++) {
-                    const orange = [255, 140, 0][channel];
-                    pixels.data[offset + channel] = Math.round(
-                        pixels.data[offset + channel] * (1 - coverage) +
-                            orange * coverage,
-                    );
-                }
-            }
-        }
-        context.putImageData(pixels, 0, top);
-    }
 
     function edit(event, allowAdd) {
         const bounds = canvas.getBoundingClientRect();
@@ -93,9 +35,14 @@ export function createMapAnnotations(canvas, camera, model, texture) {
         if (existing >= 0) centers.splice(existing, 1);
         else if (allowAdd) centers.push(direction);
         else return;
+        redraw();
+    }
+
+    function redraw() {
         context.clearRect(0, 0, image.width, image.height);
         context.drawImage(original, 0, 0);
-        centers.forEach(paintCircle);
+        paintOverlays(context);
+        paintMapCircles(context, centers);
         texture.needsUpdate = true;
     }
 
@@ -149,4 +96,5 @@ export function createMapAnnotations(canvas, camera, model, texture) {
             press = null;
         });
     }
+    return { redraw };
 }
