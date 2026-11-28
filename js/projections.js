@@ -6,6 +6,7 @@ import { createTorusState, projectTorus } from './torus.js';
 import { projectStereographic } from './stereographic.js';
 import { projectOrthographic, projectWerner, projectGores } from './simple-projections.js';
 import {ADVANCED_TYPES,advancedState,advancedCoordinate,animateAdvanced} from './advanced-projections.js';
+import { createRunderSpiegelState, projectRunderSpiegel } from './runder-spiegel.js';
 import { PLATONIC_SOLIDS, createPolyhedralCoordinate, createPolyhedralAnimation, animatePolyhedral } from './platonic.js';
 import {
     createTetrahedralCoordinate,
@@ -53,6 +54,7 @@ export function getPreviousProjectionCheckpoint(type, progress) {
 }
 
 export function getProjectionState(type, progress) {
+    if(type==='runder-spiegel') return createRunderSpiegelState(progress);
     if(ADVANCED_TYPES.includes(type)) return advancedState(type,progress);
     if(type==='gall-peters') {
         const base=getProjectionState('same-height',progress<=1/3 ? progress*2.1 : Math.min(1,0.7+(progress-1/3)*0.9));
@@ -200,6 +202,7 @@ function longitudeProfile(longitude, state) {
 
 // Write into a reusable position object to avoid allocations for every vertex.
 export function projectPoint(longitude, latitude, state, position, lobeCenter) {
+    if(state.runderSpiegel) return projectRunderSpiegel(longitude,latitude,state,position);
     if(state.advanced) {
         const d=[Math.cos(latitude)*Math.sin(longitude),Math.sin(latitude),Math.cos(latitude)*Math.cos(longitude)];
         return animateAdvanced(advancedCoordinate(state.type,d,lobeCenter),state,position);

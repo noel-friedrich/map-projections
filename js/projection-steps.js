@@ -12,6 +12,7 @@ const conic = property => [
     `Adjust latitude spacing to preserve ${property}.`,
 ];
 const descriptions = {
+    'runder-spiegel': [globe, 'Reveal a vertical metal cylinder inside the globe as the Earth becomes transparent.', 'Move the Earth’s surface onto its reflected positions on the cylinder, fading the texture in as it travels.', 'Flatten the wide reflection onto a plane using perspective from the observer on the Earth’s surface.', 'Shrink the cylinder to a thin needle while its already-flat reflection narrows into a strip.', 'Stretch the narrow image horizontally, taking the zero-radius limit to form the square map.'],
     authagraph: [globe, 'Transfer the spherical domains toward the tetrahedron using Narukawa’s published mapping.', 'Complete the mapping onto the tetrahedron’s flat faces.', 'Unfold the tetrahedron into a flat strip.', 'Move the cut portion across the strip to form the rectangular map.'],
     dymaxion: [globe, 'Map the globe onto an icosahedron using Fuller’s spherical-triangle transformation.', 'Unfold the faces and split faces into the Dymaxion AirOcean arrangement.'],
     peirce: ['Start with the globe viewed from the north pole.', 'Cut at the equator and hinge the southern hemisphere outward so both halves face forward.', 'Flatten each hemisphere into its own conformal square, with a pole at each center.', 'Cut the southern square into four triangles and move them around the northern square to fill the corners.'],

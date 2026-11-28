@@ -2,7 +2,7 @@ import { projectionCatalog } from './projection-catalog.js';
 
 const shapeGroups = [
     // Rectangles.
-    ['mercator', 'same-height', 'gall-peters', 'classic', 'equirectangular', 'torus', 'authagraph', 'peirce'],
+    ['mercator', 'same-height', 'gall-peters', 'classic', 'equirectangular', 'torus', 'runder-spiegel', 'authagraph', 'peirce'],
     // Curved and interrupted outlines.
     ['sinusoidal', 'robinson', 'natural-earth-1', 'natural-earth-2', 'equal-earth', 'goode', 'gores', 'winkel-tripel'],
     // Ellipses, circles, heart, conics, triangle, then polyhedral nets.

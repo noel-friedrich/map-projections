@@ -1,4 +1,5 @@
 export const constructionStages = {
+    'runder-spiegel': ['Globe', 'Metal cylinder inside the globe', 'World reflected in the cylinder', 'Wide perspective image', 'Thin reflected image', 'Runder-Spiegel square'],
     authagraph: ['Globe', 'Transfer to tetrahedral patches', 'Tetrahedron', 'Unfolded strip', 'AuthaGraph rectangle'],
     dymaxion: ['Globe', 'Fuller icosahedron', 'Dymaxion AirOcean net'],
     peirce: ['Globe facing the north pole', 'Hemispheres unfolded side by side', 'Two conformal hemisphere squares', 'Peirce quincuncial square'],

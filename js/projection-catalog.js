@@ -101,5 +101,6 @@ export const projectionCatalog = [
   { "id": "dymaxion", "title": "Dymaxion" },
   { "id": "peirce", "title": "Peirce quincuncial" },
   { "id": "natural-earth-1", "title": "Natural Earth I" },
-  { "id": "natural-earth-2", "title": "Natural Earth II" }
+  { "id": "natural-earth-2", "title": "Natural Earth II" },
+  { "id": "runder-spiegel", "title": "Runder-Spiegel" }
 ];

@@ -19,6 +19,7 @@ import { createProjectionStepList } from './projection-steps.js';
 const container = document.getElementById("view");
 const slider = document.getElementById("progress");
 const graticuleSlider = document.getElementById('graticule-spacing');
+const earthTextureCheckbox = document.getElementById('show-earth-texture');
 const indicatricesCheckbox = document.getElementById('show-indicatrices');
 let redrawMap = () => {};
 graticuleSlider.addEventListener('input', () => {
@@ -28,6 +29,7 @@ graticuleSlider.addEventListener('input', () => {
     redrawMap();
 });
 indicatricesCheckbox.addEventListener('change', () => redrawMap());
+earthTextureCheckbox.addEventListener('change', () => redrawMap());
 let currentProjection = projectionCatalog[0].id;
 const projectionDialog = createProjectionChooser(chooseProjection);
 const status = document.getElementById("status");
@@ -80,7 +82,9 @@ function updateProjectionInfo() {
     const info = projectionInfo[currentProjection];
     document.getElementById("info-name").textContent = projectionCatalog.find(item => item.id === currentProjection).title;
     document.getElementById("info-description").textContent = info.text;
-    document.getElementById("info-source").href = "https://en.wikipedia.org/wiki/" + info.article;
+    const source = document.getElementById("info-source");
+    source.href = info.source ?? "https://en.wikipedia.org/wiki/" + info.article;
+    source.textContent = info.sourceLabel ?? 'Wikipedia';
     updateDistortionChart();
     stepList.setProjection(currentProjection);
     stepList.setProgress(currentProgress / 100);
@@ -332,8 +336,15 @@ loadMapTexture(view.renderer)
             view.camera,
             model,
             texture,
-            context => drawGraticule(context,
-                GRATICULE_SPACINGS[Number(graticuleSlider.value)], indicatricesCheckbox.checked),
+            context => {
+                if (!earthTextureCheckbox.checked) {
+                    context.fillStyle = '#ffffff';
+                    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+                }
+                drawGraticule(context,
+                    GRATICULE_SPACINGS[Number(graticuleSlider.value)], indicatricesCheckbox.checked,
+                    earthTextureCheckbox.checked ? '#ffffff' : '#666666');
+            },
         );
         redrawMap = annotations.redraw;
         redrawMap();

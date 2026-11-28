@@ -136,5 +136,9 @@ export const distortionScores = {
   "natural-earth-2": {
     "areaDifference": 17.196305,
     "angleError": 21.41772
+  },
+  "runder-spiegel": {
+    "areaDifference": 68.831385,
+    "angleError": 32.996251
   }
 };

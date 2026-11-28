@@ -4,11 +4,11 @@ export const GRATICULE_SPACINGS = [5, 10, 15, 30, 60];
 
 const radians = Math.PI / 180;
 
-export function drawGraticule(context, spacing, showIndicatrices) {
+export function drawGraticule(context, spacing, showIndicatrices, gridColor = '#ffffff') {
     const { width, height } = context.canvas;
     const lastLatitude = Math.floor((90 - 1e-6) / spacing) * spacing;
     context.save();
-    context.strokeStyle = '#ffffff';
+    context.strokeStyle = gridColor;
     context.lineWidth = 1;
     context.beginPath();
     for (let longitude = -180; longitude <= 180; longitude += spacing) {

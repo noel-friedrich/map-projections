@@ -1,0 +1,56 @@
+Runder-Spiegel construction
+
+Projection defined by the project author, with longitude lambda and latitude phi
+in radians:
+    x = sin(lambda/2)
+    y = tan(phi/2)
+The unit Earth maps to the square [-1,1] x [-1,1].
+
+Geometry used by the animation
+
+The Earth is the unit sphere about the origin. The conceptual observer is fixed
+on its surface at O=(0,0,1), looking toward a vertical reflective cylinder
+x^2+z^2=r^2. The viewer can orbit this construction independently.
+
+A visible mirror point is M=(r*sin(theta),h,r*cos(theta)). Its outward normal
+is n=(sin(theta),0,cos(theta)). Reflecting O-M gives the direction from M toward
+the Earth: D=2*dot(n,O-M)*n-(O-M). The first forward intersection M+s*D with the
+unit sphere supplies the texture coordinates. The ray/sphere quadratic uses a
+rationalized positive root to avoid cancellation at the boundary.
+
+Perspective projection from O onto z=0 gives image coordinates
+    X = M.x/(1-M.z), Y = h/(1-M.z).
+The cylinder's apparent half-width is r/sqrt(1-r^2). Parameterizing the surface
+by normalized image width u and normalized height v avoids division by r.
+
+At finite radius the visible reflection covers only part of the Earth: source
+points inside the cylinder and beyond its tangent rays cannot reflect from its
+visible exterior. The displayed image comes from ray tracing that actual visible
+surface, not from squeezing all of the Earth onto a finite cylinder.
+
+The animation has six stages: globe, reveal the radius-0.35 metal cylinder,
+transfer the Earth's surface to the cylinder, flatten the wide reflection,
+shrink to radius 0.003, and expand into the final square. During the transfer,
+each textured patch moves from its
+source point on the Earth along its incident reflection path to the corresponding
+point on the cylinder. This single textured surface becomes opaque as it travels,
+starting at the globe's existing translucency. No separate ghost globe remains.
+
+At radius 0.35 the textured surface moves along the observer's perspective rays
+onto z=0. The metal cylinder becomes faint so the planar image remains visible.
+Next the cylinder shrinks while the reflection stays on this plane, narrowing
+according to its actual perspective width r/sqrt(1-r^2). This stage adds no
+horizontal magnification. The cylinder is never unrolled.
+
+During the final horizontal magnification, the remaining optical radius tends
+to zero. The limiting expressions are evaluated directly at zero, so the final
+geometry is exact and never divides by the vanishing radius.
+
+In the limit, theta=lambda/2 and h=sin(phi)/(1+cos(phi))=tan(phi/2).
+Normalized image width u=sin(theta) gives x=sin(lambda/2), while y=h.
+The material's metallic highlights are a studio reflection used for legibility;
+the Earth's reflected texture uses the geometric construction above.
+
+Reflection law and stable ray/sphere intersection references:
+https://www.pbr-book.org/4ed/Reflection_Models/Specular_Reflection_and_Transmission
+https://www.pbr-book.org/4ed/Shapes/Spheres

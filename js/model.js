@@ -6,6 +6,8 @@ import { createPolyhedralCoordinate, animatePolyhedral } from './platonic.js';
 import { projectStereographic, stereographicRowAngle } from './stereographic.js';
 import { GORES, projectOrthographic } from './simple-projections.js';
 import {advancedSurface,animateAdvanced} from './advanced-projections.js';
+import { createMirrorCoordinates, mirrorSample, animateMirrorSample } from './runder-spiegel.js';
+import { createRunderSpiegelConstruction } from './runder-spiegel-model.js';
 import {
     TETRA_VERTICES,
     TETRA_FACES,
@@ -297,14 +299,39 @@ export function createModel() {
     guide.add(cylinderGuide, tetrahedronGuide);
     const solidGuides = new Map();
     const conicGuides = new Map();
+    let mirrorConstruction=null;
     const position = { x: 0, y: 0, z: 0 };
 
     function update(state) {
-        const kind = state.advanced ? state.type : state.orthographic ? 'orthographic' : state.gores ? 'gores' : state.stereographic ? 'stereographic' : state.polyhedral ? state.type : state.tetrahedral
+        const mirror=state.runderSpiegel&&!state.globe;
+        const kind = mirror ? 'runder-spiegel' : state.advanced ? state.type : state.orthographic ? 'orthographic' : state.gores ? 'gores' : state.stereographic ? 'stereographic' : state.polyhedral ? state.type : state.tetrahedral
             ? "tetrahedral"
             : state.azimuthal
               ? "azimuthal"
               : "standard";
+        if(mirror&&!surfaces.has(kind)) {
+            const {coordinates,indices}=createMirrorCoordinates();
+            surfaces.set(kind,makeSurface(coordinates,indices));
+        }
+        if(state.runderSpiegel&&!mirrorConstruction) {
+            mirrorConstruction=createRunderSpiegelConstruction();
+            guide.add(mirrorConstruction.group);
+        }
+        mirrorConstruction?.update(state);
+        const transparent=Boolean(state.runderSpiegel);
+        const side=state.runderSpiegel&&state.globe?THREE.FrontSide:THREE.DoubleSide;
+        if(material.transparent!==transparent||material.side!==side) {
+            material.transparent=transparent;
+            material.side=side;
+            material.needsUpdate=true;
+        }
+        material.opacity=state.runderSpiegel ? (state.globe?state.globeOpacity:state.reflectionOpacity) : 1;
+        material.depthWrite=material.opacity>=1;
+        mesh.castShadow=material.opacity>=0.98;
+        // The reflected skin lies on the metal surface until perspective flattening.
+        material.polygonOffset=Boolean(mirror);
+        material.polygonOffsetFactor=-1;
+        material.polygonOffsetUnits=-1;
         if(state.advanced&&!surfaces.has(kind)) {
             const {coordinates,indices}=advancedSurface(kind);
             surfaces.set(kind,makeSurface(coordinates,indices));
@@ -324,7 +351,7 @@ export function createModel() {
         sphereDirections = geometry.attributes.sphereDirection;
         const latitudeMin = state.latitudeMin ?? -state.latitudeRange;
         const latitudeMax = state.latitudeMax ?? state.latitudeRange;
-        const updateGeography = surface.latitudeMin !== latitudeMin || surface.latitudeMax !== latitudeMax;
+        const updateGeography = mirror || surface.latitudeMin !== latitudeMin || surface.latitudeMax !== latitudeMax;
         const tetraAnimation = state.tetrahedral
             ? createTetrahedralAnimation(state.progress)
             : null;
@@ -337,7 +364,12 @@ export function createModel() {
                 lobeCenter,
             } = coordinate;
             const latitude = latitudeMin + (fullLatitude + Math.PI / 2) * (latitudeMax - latitudeMin) / Math.PI;
-            if(state.advanced)
+            let geography=coordinate.geography;
+            if(mirror) {
+                const sample=mirrorSample(coordinate.u,coordinate.v,state.radius);
+                animateMirrorSample(sample,coordinate.u,state,position);
+                geography=sample.geography;
+            } else if(state.advanced)
                 animateAdvanced(coordinate.advanced,state,position);
             else if(state.orthographic)
                 projectOrthographic(coordinate.direction,coordinate.half,state.progress,position);
@@ -373,9 +405,9 @@ export function createModel() {
                 uv.setY(i, (latitude + Math.PI / 2) / Math.PI);
                 sphereDirections.setXYZ(
                     i,
-                    coordinate.geography?.[0] ?? Math.cos(latitude) * Math.sin(longitude),
-                    coordinate.geography?.[1] ?? Math.sin(latitude),
-                    coordinate.geography?.[2] ?? Math.cos(latitude) * Math.cos(longitude),
+                    geography?.[0] ?? Math.cos(latitude) * Math.sin(longitude),
+                    geography?.[1] ?? Math.sin(latitude),
+                    geography?.[2] ?? Math.cos(latitude) * Math.cos(longitude),
                 );
             }
         }
@@ -390,7 +422,7 @@ export function createModel() {
         // Culling is disabled; recompute raycast bounds lazily only when clicked.
         geometry.boundingSphere = null;
         const cylindrical =
-            !state.pseudo && !state.tetrahedral && !state.azimuthal && !state.polyhedral && !state.conic && !state.ellipse && !state.toroidal && !state.stereographic && !state.orthographic && !state.werner && !state.gores && !state.advanced;
+            !state.pseudo && !state.tetrahedral && !state.azimuthal && !state.polyhedral && !state.conic && !state.ellipse && !state.toroidal && !state.stereographic && !state.orthographic && !state.werner && !state.gores && !state.advanced && !state.runderSpiegel;
         cylinderGuide.visible = cylindrical && state.project < 1;
         tetrahedronGuide.visible =
             Boolean(state.tetrahedral) && state.progress < 0.5;

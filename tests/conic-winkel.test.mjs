@@ -97,6 +97,10 @@ test('Winkel construction has a hemisphere, disk, Aitoff ellipse and direct fina
 
 test('new animations remain finite and continuous at every stage boundary',()=>{
     for(const type of Object.keys(constructionStages)) {
+        // Finite mirror reflections have a changing visible domain and transfer
+        // only visible Earth patches. runder-spiegel.test.mjs checks their image chart
+        // and opacity handoff instead of assuming every Earth point stays visible.
+        if(type==='runder-spiegel') continue;
         const min=type==='winkel-tripel'?-Math.PI/2:CONIC_LATITUDE_MIN;
         const max=type==='winkel-tripel'?Math.PI/2:CONIC_LATITUDE_MAX;
         for(let i=0;i<=100;i++) {

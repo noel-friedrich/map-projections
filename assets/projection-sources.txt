@@ -1,5 +1,13 @@
 Projection equations and reference data
 
+Runder-Spiegel: project-defined x=sin(longitude/2), y=tan(latitude/2).
+Finite-radius stages move Earth patches onto a specular cylinder reflection
+from an observer on the unit Earth. The wide reflection is flattened by perspective
+before the cylinder shrinks and its planar image narrows. Horizontal magnification
+then produces the final square.
+The final stage evaluates the zero-radius limit analytically.
+Full derivation and finite-radius visibility: runder-spiegel.txt.
+
 Natural Earth I and II: unit-sphere polynomial definitions. These are map
 projections, distinct from the Natural Earth I raster image used as the texture.
 https://proj.org/en/stable/operations/projections/natearth.html

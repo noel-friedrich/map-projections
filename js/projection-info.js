@@ -1,5 +1,6 @@
-// Short summaries; each entry links to its Wikipedia source.
+// Short summaries, with a source or creator link.
 export const projectionInfo = {
+  'runder-spiegel': {source:'https://noel-friedrich.de',sourceLabel:'homemade map',text:'A map made by viewing the reflection of the Earth’s inner surface in a metallic cylinder, then stretching it into a square. The map is the limit of this construction as the cylinder’s radius approaches zero, simplifying to x = sin(longitude / 2), y = tan(latitude / 2).'},
   'natural-earth-1': {article:'Natural_Earth_projection',text:'A compromise pseudocylindrical world map with gently rounded corners. Its polynomial latitude spacing and parallel widths balance area and shape distortion, without preserving either exactly. The poles form straight lines.'},
   'natural-earth-2': {article:'Natural_Earth_projection',text:'A more rounded companion to Natural Earth I. Its meridians bend steeply inward near short, straight pole lines, giving the map an elongated globe shape. This compromise projection balances area and shape distortion without preserving either exactly.'},
   authagraph: {article:'AuthaGraph_projection',text:'A rectangular tetrahedral world map, implemented from Hajime Narukawa’s 2022 mathematical formulation. Transfers spherical regions to a tetrahedron, unfolds its faces and rearranges the strip into a rectangle. Balances area and shape distortion.'},
